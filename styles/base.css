@@ -1,0 +1,105 @@
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+/* 
+  Oráculo del Arte - Design System
+  Plataforma educativa de Historia del Arte
+  
+  Paleta de colores:
+  - Granate #661414 (principal)
+  - Blanco suave #F5F5F5 (fondo)
+  - Negro profundo #1A1A1A (texto)
+  - Grises: #4A4A4A, #6B6B6B, #AFAFAF, #E8E8E8
+*/
+
+/* Variables CSS */
+:root {
+  --primary: #661414;
+  --primary-foreground: #F5F5F5;
+  --background: #F5F5F5;
+  --foreground: #1A1A1A;
+  --card: #FFFFFF;
+  --card-foreground: #1A1A1A;
+  --muted: #E8E8E8;
+  --muted-foreground: #4A4A4A;
+  --border: #AFAFAF;
+  --secondary: #F5F0E8;
+  --hover-button: #e6e6e6;
+  
+  /* Espaciado */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  --spacing-4xl: 5rem;
+  --spacing-5xl: 6rem;
+  --spacing-6xl: 8rem;
+  
+  /* Tipografía */
+  --font-family-base: Georgia, 'Times New Roman', serif;
+  --font-family-heading: 'EB Garamond', Georgia, serif;
+  
+  /* Transiciones */
+  --transition-fast: 0.2s;
+  --transition-normal: 0.3s;
+  --transition-slow: 0.5s;
+}
+
+/* Reset y base */
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-family-base);
+  background-color: var(--background);
+  color: var(--foreground);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Eliminar subrayados por defecto en todos los enlaces y elementos */
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: none;
+}
+
+/* Tipografía base */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+/* Layout base */
+.page-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+/* Container */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+
