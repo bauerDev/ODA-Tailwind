@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+/** Define la estructura de una obra de arte (coincide con la tabla artworks en la BD) */
 interface Artwork {
   id: number;
   title: string;
@@ -16,6 +17,7 @@ interface Artwork {
   description: string;
 }
 
+/** Valores iniciales vacíos para el formulario de alta de obra */
 const emptyArtwork: Omit<Artwork, "id"> = {
   title: "",
   author: "",
@@ -29,12 +31,18 @@ const emptyArtwork: Omit<Artwork, "id"> = {
 };
 
 export default function ManageArtworks() {
+  // Lista de obras cargadas desde la API
   const [artworks, setArtworks] = useState<Artwork[]>([]);
+  // Indica si está cargando datos (muestra el spinner)
   const [loading, setLoading] = useState(true);
+  // Controla si el modal del formulario está visible
   const [showForm, setShowForm] = useState(false);
+  // ID de la obra que se está editando (null = alta nueva)
   const [editingId, setEditingId] = useState<number | null>(null);
+  // Datos del formulario (alta/edición)
   const [form, setForm] = useState(emptyArtwork);
 
+  /** Obtiene todas las obras desde la API y las guarda en artworks */
   const loadArtworks = () => {
     setLoading(true);
     fetch("/api/artworks")
@@ -49,18 +57,22 @@ export default function ManageArtworks() {
       });
   };
 
+  // Al montar el componente, cargamos las obras
   useEffect(() => {
     loadArtworks();
   }, []);
 
+  /** Devuelve ubicación (BD puede usar ubication o location) */
   const getLocation = (a: Artwork) => a.ubication ?? a.location ?? "";
 
+  /** Abre el modal para añadir una obra nueva (formulario vacío) */
   const openAdd = () => {
     setForm(emptyArtwork);
     setEditingId(null);
     setShowForm(true);
   };
 
+  /** Abre el modal para editar una obra existente (precarga sus datos en el formulario) */
   const openEdit = (a: Artwork) => {
     setForm({
       title: a.title,
@@ -77,11 +89,13 @@ export default function ManageArtworks() {
     setShowForm(true);
   };
 
+  /** Cierra el modal del formulario */
   const closeForm = () => {
     setShowForm(false);
     setEditingId(null);
   };
 
+  /** Envía el formulario: POST para nueva obra o PUT para editar; luego recarga la tabla */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...form, ubication: form.ubication ?? "" };
@@ -109,6 +123,7 @@ export default function ManageArtworks() {
     }
   };
 
+  /** Elimina una obra por ID; pide confirmación y recarga la tabla tras borrar */
   const handleDelete = async (id: number) => {
     if (!confirm("¿Eliminar esta obra?")) return;
     try {
@@ -132,6 +147,7 @@ export default function ManageArtworks() {
             Add, edit or delete artworks
           </p>
 
+          {/* Botón para abrir el formulario de alta de obra */}
           <div className="mb-(--spacing-lg) flex justify-end">
             <button
               onClick={openAdd}
@@ -141,8 +157,10 @@ export default function ManageArtworks() {
             </button>
           </div>
 
+          {/* Contenedor de la tabla: muestra spinner si loading, tabla con datos o mensaje vacío */}
           <div className="border border-(--border) overflow-x-auto">
             {loading ? (
+              /* Rueda de carga mientras se obtienen las obras */
               <div className="flex items-center justify-center py-16">
                 <div
                   className="h-10 w-10 animate-spin rounded-full border-4 border-(--muted-foreground) border-t-(--primary)"
@@ -150,6 +168,7 @@ export default function ManageArtworks() {
                 />
               </div>
             ) : (
+              /* Tabla con todas las columnas de la obra (ID, título, autor, etc.) y acciones */
               <table className="w-full min-w-[800px] border-collapse text-(--foreground) bg-white">
                 <thead>
                   <tr className="bg-(--muted) text-(--foreground)">
@@ -211,6 +230,7 @@ export default function ManageArtworks() {
                           <span className="text-(--muted-foreground)">—</span>
                         )}
                       </td>
+                      {/* Botones de acción: Editar (abre formulario) y Eliminar (borra en BD) */}
                       <td className="border-r-0">
                         <div className="flex gap-2">
                           <button
@@ -234,6 +254,7 @@ export default function ManageArtworks() {
                 </tbody>
               </table>
             )}
+            {/* Mensaje cuando no hay obras en la base de datos */}
             {!loading && artworks.length === 0 && (
               <p className="py-8 text-center text-(--muted-foreground)">
                 No hay obras. Añade una con el botón «Añadir obra».
@@ -243,6 +264,7 @@ export default function ManageArtworks() {
         </div>
       </section>
 
+      {/* Modal del formulario: overlay oscuro + formulario; clic fuera cierra */}
       {showForm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -255,6 +277,7 @@ export default function ManageArtworks() {
             <h2 className="text-2xl font-(--font-family-heading) mb-(--spacing-lg)">
               {editingId ? "Editar obra" : "Añadir obra"}
             </h2>
+            {/* Formulario reutilizado para alta y edición; handleSubmit decide POST o PUT */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm mb-1">Título *</label>

@@ -1,7 +1,13 @@
+/**
+ * API /api/artworks
+ * GET: Devuelve todas las obras ordenadas por id.
+ * POST: Crea una nueva obra en la base de datos.
+ */
 import { NextApiRequest, NextApiResponse } from "next";
 import { pool } from "../../lib/db/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // GET: listar todas las obras
   if (req.method === "GET") {
     try {
       const result = await pool.query("SELECT * FROM artworks ORDER BY id");
@@ -13,6 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
+  // POST: insertar nueva obra
   if (req.method === "POST") {
     const { title, author, year, movement, technique, dimensions, ubication, location, image, description } = req.body || {};
     const loc = ubication ?? location ?? "";
@@ -36,6 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           description || "",
         ]
       );
+      // RETURNING * devuelve la obra creada con su id asignado
       res.status(201).json(result.rows[0]);
     } catch (error) {
       console.error(error);
@@ -44,6 +52,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
+  // Método no permitido
   res.setHeader("Allow", ["GET", "POST"]);
   res.status(405).json({ error: `Method ${req.method} not allowed` });
 }
