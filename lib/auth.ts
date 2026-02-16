@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
         const email = credentials.email.trim();
         const password = credentials.password;
 
-        if (email === "admin" && password === "admin") {
+        if ((email === "admin" || email === "admin@admin") && password === "admin") {
           return {
             id: "admin",
             email: "admin",

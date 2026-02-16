@@ -5,9 +5,12 @@ export default function AdminPage() {
                 <div className="w-full max-w-[1280px] mx-auto">
                     <h1 className="text-4xl font-(--font-family-heading) text-(--foreground) mb-(--spacing-xl) text-center">Admin Panel</h1>
                     <p className="text-lg text-(--muted-foreground) mb-(--spacing-2xl) text-center">Manage artworks, users and collections</p>
-                    <div className="flex gap-(--spacing-2xl) justify-center [&>a]:bg-(--primary) [&>a]:text-(--primary-foreground) [&>a]:px-(--spacing-2xl) [&>a]:py-(--spacing-md) [&>a]:transition-all [&>a]:duration-(--transition-fast) [&>a]:hover:bg-[rgba(102,20,20,0.8)] [&>a]:cursor-pointer [&>a]:hover:text-(--primary-foreground)">
+                    <div className="flex flex-wrap gap-(--spacing-2xl) justify-center [&>a]:bg-(--primary) [&>a]:text-(--primary-foreground) [&>a]:px-(--spacing-2xl) [&>a]:py-(--spacing-md) [&>a]:transition-all [&>a]:duration-(--transition-fast) [&>a]:hover:bg-[rgba(102,20,20,0.8)] [&>a]:cursor-pointer [&>a]:hover:text-(--primary-foreground)">
                         <a href="/admin/manage-artworks">
                             Manage Artworks
+                        </a>
+                        <a href="/upload">
+                            Upload image
                         </a>
                         <a href="/admin/manage-users">
                             View Users
