@@ -143,22 +143,31 @@ export default function ObraDetalle() {
               <p><b>Location:</b> {obra.location}</p>
             </div>
 
-            <button
-              onClick={async () => {
-                await fetch("/api/collections", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    user_id: 1,
-                    artwork_id: obra.id,
-                  }),
-                });
+            <div className="mt-6 flex flex-wrap gap-(--spacing-sm)">
+              <button
+                onClick={async () => {
+                  await fetch("/api/collections", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      user_id: 1,
+                      artwork_id: obra.id,
+                    }),
+                  });
 
-                alert("Artwork added to your collection");
-              }}
-            >
-             + Add to my collection
-            </button>
+                  alert("Artwork added to your collection");
+                }}
+                className="inline-flex items-center gap-1 bg-(--primary) px-4 py-2 text-sm text-(--primary-foreground) transition hover:opacity-90"
+              >
+                + Add to my collection
+              </button>
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted)"
+              >
+                Analyze characters
+              </button>
+            </div>
           </div>
 
           {/* DESCRIPTION - spans both columns full width */}

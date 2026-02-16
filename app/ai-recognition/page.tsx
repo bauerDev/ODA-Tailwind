@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 
 type AnalysisResult = {
+    is_artwork?: boolean;
     title?: string | null;
     author?: string | null;
     year?: string | null;
@@ -80,8 +81,16 @@ export default function Reconocimiento() {
                 throw new Error('AI returned an unexpected response');
             }
 
+            const isArtwork = data.is_artwork === true || data.is_artwork === 'true';
+
+            if (!isArtwork) {
+                setError('No information was found about this artwork. The image might not depict a recognizable artwork.');
+                return;
+            }
+
             // Store image only in dedicated key: data URLs can be huge and hit sessionStorage limits in JSON
             const normalized = {
+                is_artwork: true,
                 title: data.title ?? null,
                 author: data.author ?? null,
                 year: data.year ?? null,
