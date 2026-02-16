@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import type { File as FormidableFile } from 'formidable';
 import fs from 'fs';
-import crypto from 'crypto';
+import OpenAI from 'openai';
 
 export const config = {
   api: {
@@ -19,7 +19,6 @@ type AnalysisResult = {
   dimensions?: string | null;
   location?: string | null;
   description?: string | null;
-  characters?: { name: string; role: string }[] | null;
   image_url?: string | null;
 };
 
@@ -51,10 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const filepath = (file as any).filepath || (file as any).path;
     const buffer = fs.readFileSync(filepath);
-    const filename = (file as any).originalFilename || (file as any).newFilename || (file as any).name || 'uploaded';
-    const imageHash = crypto.createHash('sha256').update(buffer).digest('hex').slice(0, 8);
     const detected = (file as any).mimetype || detectMimeType(buffer) || '';
-    console.log('Received image', { filename, detected, size: buffer.length, hash: imageHash });
 
     // Basic validations to protect OpenAI usage and avoid huge prompts
     const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -62,164 +58,83 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Unsupported image type. Use JPG, PNG, WEBP or GIF.' });
     }
 
-    const MAX_BYTES = 300 * 1024; // 300 KB limit for image payload sent to OpenAI
-    if (buffer.length > MAX_BYTES) {
-      return res.status(413).json({
-        error: 'Image too large for analysis',
-        imageSizeBytes: buffer.length,
-        suggestion: 'Please compress the image client-side (try under 300KB) before uploading. The app attempts to compress automatically; reduce resolution or quality if needed.'
-      });
+    // Resize/compress image if too large to stay under OpenAI context limit (128k tokens)
+    let bufferToSend: Buffer = Buffer.from(buffer);
+    const MAX_BYTES_FOR_API = 90 * 1024; // ~90KB keeps us safely under token limit
+    if (buffer.length > MAX_BYTES_FOR_API) {
+      try {
+        const sharp = (await import('sharp')).default;
+        // Cast for sharp input/output: Node Buffer typing is broader than sharp's NonSharedBuffer
+        const input = buffer as Parameters<typeof sharp>[0];
+        const out1 = await sharp(input)
+          .resize(1024, 1024, { fit: 'inside', withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+        bufferToSend = out1 as Buffer;
+        if (bufferToSend.length > MAX_BYTES_FOR_API) {
+          const out2 = await sharp(input)
+            .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+            .jpeg({ quality: 70 })
+            .toBuffer();
+          bufferToSend = out2 as Buffer;
+        }
+      } catch (sharpErr: any) {
+        console.warn('Sharp resize failed, using original:', sharpErr?.message);
+      }
     }
 
-    // Use OpenAI (GPT) server-side to analyze the image and return structured JSON
+    const imageBase64 = bufferToSend.toString('base64');
+
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
-    const imageBase64 = buffer.toString('base64');
-    console.log('Prepared base64 length:', imageBase64.length);
+    const systemPrompt = `You are an expert art historian. I will give you an image (base64) and you must return ONLY a valid JSON with exactly these keys: title, author, year, movement, technique, dimensions, location, description, image_url. All values must be in English. Each key must be a simple text string (no Markdown, no HTML) or null if unknown. The "description" field must be approximately 2000 characters: a detailed analysis of the artwork including subject, composition, technique, historical context, and significance. Format the description with a blank line (double newline) between each paragraph. "image_url" must be a URL if available or null. Do not add any extra text, explanations, or delimiters; respond only with the raw JSON.`;
 
-    // If Cloudinary is configured, upload the image and prefer the public URL in prompts
-    const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
-    const CLOUDINARY_UPLOAD_PRESET = process.env.CLOUDINARY_UPLOAD_PRESET;
-    let uploadedImageUrl: string | null = null;
-    if (CLOUDINARY_CLOUD_NAME && CLOUDINARY_UPLOAD_PRESET) {
-      try {
-        const cloudUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
-        const body = new URLSearchParams();
-        // send as data URL
-        body.append('file', `data:${detected};base64,${imageBase64}`);
-        body.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    const dataUrl = `data:${detected};base64,${imageBase64}`;
+    const userContent = 'Return only the requested JSON, no additional text.';
 
-        const cu = await fetch(cloudUrl, { method: 'POST', body });
-        if (cu.ok) {
-          const cj = await cu.json();
-          uploadedImageUrl = cj.secure_url || cj.url || null;
-          console.log('Uploaded image to Cloudinary:', uploadedImageUrl);
-        } else {
-          const text = await cu.text();
-          console.warn('Cloudinary upload failed:', cu.status, text);
-        }
-      } catch (e) {
-        console.warn('Cloudinary upload exception', e);
-      }
-    }
-
-    const systemPrompt = `Eres un historiador del arte experto. Te daré una imagen codificada en base64 y debes devolver SÓLO un JSON válido EXACTAMENTE con las claves: title, author, year, movement, technique, dimensions, location, description, characters, image_url. Cada clave debe ser una cadena de texto simple (sin Markdown, sin etiquetas HTML) o null si no se puede identificar. 'characters' debe ser un arreglo (puede estar vacío) de objetos con las propiedades 'name' y 'role'. 'image_url' debe ser una URL si está disponible o null. No añadas texto adicional, explicaciones ni delimitadores; responde únicamente con el JSON puro.`;
-
-    const userPrompt = uploadedImageUrl
-      ? `Image URL: ${uploadedImageUrl}\n\nDevuélveme únicamente el JSON pedido, sin texto adicional.`
-      : `Image (base64):\n${imageBase64}\n\nDevuélveme únicamente el JSON pedido, sin texto adicional.`;
-
-    const payload = {
-      model: OPENAI_MODEL,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      temperature: 0,
-      max_tokens: 1500,
-    };
-
-    let r: Response | null = null;
+    const client = new OpenAI({ apiKey: OPENAI_API_KEY });
     let responseText = '';
 
-    // First attempt: use OpenAI Responses API with multimodal input (image + text)
     try {
-      const multimodalPayload = {
+      const completion = await client.chat.completions.create({
         model: OPENAI_MODEL,
-        input: [
-          { role: 'system', content: [{ type: 'output_text', text: systemPrompt }] },
+        messages: [
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: [
-              { type: 'input_image', image_base64: imageBase64 },
-              { type: 'input_text', text: userPrompt }
-            ]
-          }
-        ]
-      };
-
-      console.log('Sending multimodal payload to OpenAI responses API', OPENAI_MODEL);
-      r = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify(multimodalPayload),
-      });
-
-      if (r.ok) {
-        const jr = await r.json();
-        // Try to extract text output from Responses API structure
-        const out = jr.output && Array.isArray(jr.output) ? jr.output[0] : jr;
-        if (out && Array.isArray(out.content)) {
-          const t = out.content.find((c: any) => c.type === 'output_text' || c.type === 'text');
-          responseText = t?.text ?? t?.text ?? JSON.stringify(out.content);
-        } else if (typeof jr.output === 'string') {
-          responseText = jr.output;
-        } else if (typeof jr.output?.[0]?.content?.[0]?.text === 'string') {
-          responseText = jr.output[0].content[0].text;
-        } else {
-          responseText = JSON.stringify(jr);
-        }
-      } else {
-        // keep r (non-ok) to let fallback attempt happen
-        console.warn('Multimodal request returned non-ok status', r.status);
-      }
-    } catch (fetchErr: any) {
-      console.warn('Multimodal OpenAI request failed, will fallback to chat/completions method', fetchErr?.message ?? fetchErr);
-      r = null;
-    }
-
-    // Fallback: use chat completions by embedding base64 in prompt (older approach)
-    if (!responseText) {
-      try {
-        console.log('Falling back to chat.completions payload to OpenAI');
-        r = await fetch('https://api.openai.com/v1/chat/completions', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
+              { type: 'text', text: userContent },
+              { type: 'image_url', image_url: { url: dataUrl } },
+            ],
           },
-          body: JSON.stringify(payload),
-        });
-      } catch (fetchErr: any) {
-        console.error('OpenAI fetch failed (fallback):', fetchErr);
-        const imageSize = buffer.length;
-        return res.status(502).json({
-          error: 'OpenAI request failed',
-          message: String(fetchErr.message ?? fetchErr),
-          suggestion:
-            'Posibles causas: problema de red, bloqueo por firewall, o payload demasiado grande (imagen base64). Intenta subir la imagen a un storage público y pasar la URL en el prompt.',
-          imageSizeBytes: imageSize,
-          stack: fetchErr.stack ? String(fetchErr.stack) : undefined,
-        });
-      }
+        ],
+        temperature: 0,
+        max_tokens: 3500,
+      });
+      responseText = completion.choices?.[0]?.message?.content ?? '';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error('OpenAI ai-recognition error:', msg);
+      return res.status(502).json({
+        error: 'OpenAI request failed',
+        message: msg,
+        suggestion: 'Check OPENAI_API_KEY and that the model supports vision (e.g. gpt-4o-mini).',
+      });
     }
 
-
-    if (!r) return res.status(502).json({ error: 'No response from OpenAI' });
-
-    if (!r.ok) {
-      const t = await r.text();
-      return res.status(r.status).json({ error: t });
-    }
-
-    const json = await r.json();
-    // If we didn't already extract text from multimodal branch, try to read from chat/completions structure
-    if (!responseText) {
-      responseText = json.choices?.[0]?.message?.content ?? json.choices?.[0]?.message?.content?.[0]?.text ?? json.output?.[0]?.content?.[0]?.text ?? '';
-    }
-    console.log('OpenAI response content:', String(responseText).slice(0, 1000));
+    // Strip markdown code block if present (e.g. ```json ... ```)
+    let textToParse = String(responseText).trim();
+    const codeBlock = textToParse.match(/```(?:json)?\s*([\s\S]*?)```/m);
+    if (codeBlock) textToParse = codeBlock[1].trim();
 
     // Try parse JSON directly, otherwise extract JSON substring
     let parsed: any = null;
     try {
-      parsed = JSON.parse(responseText);
+      parsed = JSON.parse(textToParse);
     } catch (e) {
-      const match = String(responseText).match(/\{[\s\S]*\}/m);
+      const match = String(textToParse).match(/\{[\s\S]*\}/m);
       if (match) {
         try {
           parsed = JSON.parse(match[0]);
@@ -230,10 +145,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (!parsed) {
-      return res.status(200).json({ raw: responseText, _debug_content: responseText, _image_hash: imageHash });
+      return res.status(200).json({ raw: responseText });
     }
 
-    // Normalize parsed fields: ensure simple strings or null, and normalize characters array
     const coerceString = (v: any) => {
       if (v === undefined || v === null) return null;
       if (typeof v === 'string') return v.trim() === '' ? null : v;
@@ -244,29 +158,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
 
-    const normalizeCharacters = (v: any) => {
-      if (!v) return null;
-      if (Array.isArray(v)) {
-        return v.map((c) => {
-          if (!c) return { name: '', role: '' };
-          if (typeof c === 'string') return { name: c, role: '' };
-          return { name: coerceString(c.name) ?? coerceString(c.nombre) ?? '', role: coerceString(c.role) ?? coerceString(c.rol) ?? '' };
-        }).filter((c) => c.name || c.role);
-      }
-      if (typeof v === 'string') {
-        // split lines into simple name-role pairs when possible
-        const lines = v.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        if (lines.length === 0) return null;
-        return lines.map((l) => {
-          const m = l.match(/^(.+?)\s*[-–—:\t]\s*(.+)$/);
-          if (m) return { name: m[1].trim(), role: m[2].trim() };
-          return { name: l, role: '' };
-        });
-      }
-      // unexpected shape
-      return null;
-    };
-
     const result: AnalysisResult = {
       title: coerceString(parsed.title),
       author: coerceString(parsed.author),
@@ -275,13 +166,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       technique: coerceString(parsed.technique),
       dimensions: coerceString(parsed.dimensions),
       location: coerceString(parsed.location),
-      description: coerceString(parsed.description) ?? coerceString(parsed._raw) ?? null,
-      characters: normalizeCharacters(parsed.characters) ?? null,
+      description: coerceString(parsed.description) ?? null,
       image_url: coerceString(parsed.image_url),
     };
 
-    // include raw model content for local debugging
-    return res.status(200).json({ ...result, _debug_content: responseText, _image_hash: imageHash });
+    return res.status(200).json(result);
   } catch (err: any) {
     return res.status(500).json({ error: err.message || String(err) });
   }

@@ -1,6 +1,5 @@
 "use client";
 import React, { useState } from "react";
-import { useRouter } from 'next/navigation';
 
 type AnalysisResult = {
     title?: string | null;
@@ -11,12 +10,10 @@ type AnalysisResult = {
     dimensions?: string | null;
     location?: string | null;
     description?: string | null;
-    characters?: { name: string; role: string }[];
     image_url?: string | null;
 };
 
 export default function Reconocimiento() {
-    const router = useRouter();
     const [filePreview, setFilePreview] = useState<string | null>(null);
     const [fileObj, setFileObj] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
@@ -54,16 +51,15 @@ export default function Reconocimiento() {
                 body: form,
             });
             if (!res.ok) {
-                // try to parse structured JSON error
-                let bodyText = await res.text();
+                const bodyText = await res.text();
                 try {
                     const j = JSON.parse(bodyText);
-                    bodyText = j.error || j.message || bodyText;
-                    if (j.suggestion) bodyText += ' — ' + j.suggestion;
-                } catch (e) {
-                    // keep raw
+                    const msg = j.error || j.message || bodyText;
+                    throw new Error(j.suggestion ? `${msg} — ${j.suggestion}` : msg);
+                } catch (e: unknown) {
+                    if (e instanceof Error) throw e;
+                    throw new Error(bodyText || 'API error');
                 }
-                throw new Error(bodyText || 'API error');
             }
             const data = await res.json();
 
@@ -80,32 +76,34 @@ export default function Reconocimiento() {
                 // ignore
             }
 
-            // Expect the API (GPT) to return the structured JSON with keys in English.
-            let final: any = data;
-            if (data && typeof data.raw === 'string') {
-                try {
-                    final = JSON.parse(data.raw);
-                } catch (e) {
-                    final = data;
-                }
-            }
-
-            if (!final || typeof final !== 'object') {
+            if (!data || typeof data !== 'object') {
                 throw new Error('AI returned an unexpected response');
             }
 
-            // ensure image_url exists
-            final.image_url = final.image_url ?? filePreview ?? imgDataUrl ?? null;
+            // Store image only in dedicated key: data URLs can be huge and hit sessionStorage limits in JSON
+            const normalized = {
+                title: data.title ?? null,
+                author: data.author ?? null,
+                year: data.year ?? null,
+                movement: data.movement ?? null,
+                technique: data.technique ?? null,
+                dimensions: data.dimensions ?? null,
+                location: data.location ?? null,
+                description: data.description ?? null,
+                image_url: data.image_url ?? null, // external URL only; our upload stays in ai:recognition:image
+            };
 
-            setResult(final);
+            setResult({ ...normalized, image_url: normalized.image_url ?? imgDataUrl ?? filePreview });
+
             try {
-                sessionStorage.setItem('ai:recognition:result', JSON.stringify(final));
+                sessionStorage.setItem('ai:recognition:result', JSON.stringify(normalized));
                 if (imgDataUrl) sessionStorage.setItem('ai:recognition:image', imgDataUrl);
             } catch (e) {
                 console.warn('Could not save recognition result to sessionStorage', e);
             }
 
-            router.push('/artwork/preview');
+            // Full navigation so preview page reads sessionStorage reliably
+            window.location.href = '/artwork/preview';
         } catch (err: any) {
             setError(err.message || String(err));
         } finally {
@@ -215,18 +213,8 @@ export default function Reconocimiento() {
 
                                         <div className="mb-(--spacing-xl) last:mb-0">
                                             <h3 className="mb-(--spacing-lg) border-b border-(--border) pb-(--spacing-sm) font-(--font-family-heading) text-xl">Description</h3>
-                                            <div className="leading-relaxed text-(--muted-foreground)">
-                                                <p>{result.description ?? "-"}</p>
-                                                {result.characters && result.characters.length > 0 && (
-                                                    <div className="mt-(--spacing-md)">
-                                                        <h4 className="font-medium">Characters</h4>
-                                                        <ul className="mt-(--spacing-sm) list-disc pl-(--spacing-lg)">
-                                                            {result.characters.map((c, i) => (
-                                                                <li key={i}>{c.name} — {c.role}</li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
+                                            <div className="leading-relaxed text-(--muted-foreground) whitespace-pre-line">
+                                                {result.description ?? "-"}
                                             </div>
                                         </div>
 
