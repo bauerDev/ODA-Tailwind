@@ -10,7 +10,7 @@ export default function AdminPage() {
                             Manage Artworks
                         </a>
                         <a href="/upload">
-                            Upload image
+                            Upload Image
                         </a>
                         <a href="/admin/manage-users">
                             View Users

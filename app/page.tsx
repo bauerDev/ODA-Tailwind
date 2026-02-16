@@ -33,32 +33,69 @@ export default function Home() {
                   Explore our tools
               </h2>
 
-              <div className="grid grid-cols-1 gap-(--spacing-xl) md:grid-cols-2 lg:grid-cols-3 ">
-                  {/* Bucle para recorrer las features */}
-
-                  <a href="#" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
-                      {/* TODO: Agregar href con el enlace de la feature (feature.enlace) */}
-                      <div className="relative w-full pb-[75%] overflow-hidden">
+              <div className="grid grid-cols-1 gap-(--spacing-xl) md:grid-cols-2 lg:grid-cols-3">
+                  <a href="/gallery" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                      <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
                           <img
-                              src="#"
-                              alt=""
+                              src="/images/features/explorar-galeria.webp"
+                              alt="Art Gallery"
                               className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
                           />
-                          {/* TODO: Agregar src con la ruta de la imagen (feature.imagen) y alt con el título (feature.titulo) */}
                       </div>
                       <div className="p-(--spacing-lg)">
                           <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
-                              {/* TODO: Agregar título de la feature (feature.titulo) */}
+                              Gallery
                           </h3>
                           <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
-                              {/* TODO: Agregar descripción de la feature (feature.descripcion) */}
+                              Browse our collection of artworks. Filter by author, movement, technique or period and discover masterpieces from art history.
                           </p>
                           <span className="inline-block mt-(--spacing-lg) font-(--font-family-heading) no-underline" style={{color: 'var(--primary)'}}>
                               Learn more →
                           </span>
                       </div>
                   </a>
-                  {/* Fin del bucle para recorrer las features */}
+
+                  <a href="/ai-recognition" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                      <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
+                          <img
+                              src="/images/features/reconocimiento-ia.webp"
+                              alt="AI Recognition"
+                              className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
+                          />
+                      </div>
+                      <div className="p-(--spacing-lg)">
+                          <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
+                              AI Recognition
+                          </h3>
+                          <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
+                              Upload an image of an artwork and our AI will analyze it to identify the piece, its author, period and historical context.
+                          </p>
+                          <span className="inline-block mt-(--spacing-lg) font-(--font-family-heading) no-underline" style={{color: 'var(--primary)'}}>
+                              Learn more →
+                          </span>
+                      </div>
+                  </a>
+
+                  <a href="/my-collection" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                      <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
+                          <img
+                              src="/images/features/mi-coleccion.webp"
+                              alt="My Collection"
+                              className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
+                          />
+                      </div>
+                      <div className="p-(--spacing-lg)">
+                          <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
+                              My Collection
+                          </h3>
+                          <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
+                              Create and manage your personalized collections of artworks. Organize your favorites by theme, period or any criteria you prefer.
+                          </p>
+                          <span className="inline-block mt-(--spacing-lg) font-(--font-family-heading) no-underline" style={{color: 'var(--primary)'}}>
+                              Learn more →
+                          </span>
+                      </div>
+                  </a>
               </div>
           </div>
       </section>
