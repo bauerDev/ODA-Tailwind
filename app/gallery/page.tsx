@@ -20,7 +20,14 @@ export default function GaleriaPage() {
     });
 }, []);
 if (loading) {
-  return <p style={{ padding: 40 }}>Loading gallery…</p>;
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center">
+      <div
+        className="h-12 w-12 animate-spin rounded-full border-4 border-(--muted-foreground) border-t-(--primary)"
+        aria-label="Cargando galería"
+      />
+    </div>
+  );
 }
 
   return (
