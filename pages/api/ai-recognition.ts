@@ -11,6 +11,7 @@ export const config = {
 };
 
 type AnalysisResult = {
+  is_artwork?: boolean;
   title?: string | null;
   author?: string | null;
   year?: string | null;
@@ -89,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
-    const systemPrompt = `You are an expert art historian. I will give you an image (base64) and you must return ONLY a valid JSON with exactly these keys: title, author, year, movement, technique, dimensions, location, description, image_url. All values must be in English. Each key must be a simple text string (no Markdown, no HTML) or null if unknown. The "description" field must be approximately 2000 characters: a detailed analysis of the artwork including subject, composition, technique, historical context, and significance. Format the description with a blank line (double newline) between each paragraph. "image_url" must be a URL if available or null. Do not add any extra text, explanations, or delimiters; respond only with the raw JSON.`;
+    const systemPrompt = `You are an expert art historian. I will give you an image (base64) and you must return ONLY a valid JSON with exactly these keys: is_artwork, title, author, year, movement, technique, dimensions, location, description, image_url. "is_artwork" must be a boolean: true if the image clearly depicts an artwork (painting, sculpture, drawing, etc.) that can be identified or analyzed; false if the image does NOT depict an artwork (e.g. random photo, person, landscape, meme, screenshot, document, or anything that is not a work of art). When is_artwork is false, set all other fields to null. When is_artwork is true, all values must be in English. Each other key must be a simple text string (no Markdown, no HTML) or null if unknown. The "description" field must be approximately 2000 characters: a detailed analysis of the artwork including subject, composition, technique, historical context, and significance. Format the description with a blank line (double newline) between each paragraph. "image_url" must be a URL if available or null. Do not add any extra text, explanations, or delimiters; respond only with the raw JSON.`;
 
     const dataUrl = `data:${detected};base64,${imageBase64}`;
     const userContent = 'Return only the requested JSON, no additional text.';
@@ -158,7 +159,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     };
 
+    const isArtwork = parsed.is_artwork === true || parsed.is_artwork === 'true';
     const result: AnalysisResult = {
+      is_artwork: isArtwork,
       title: coerceString(parsed.title),
       author: coerceString(parsed.author),
       year: coerceString(parsed.year),
