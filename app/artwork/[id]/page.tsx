@@ -89,7 +89,16 @@ export default function ObraDetalle() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [lightboxOpen]);
 
-  if (!obra) return <p className="p-8">Loading artwork...</p>;
+  if (!obra) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center">
+        <div
+          className="h-12 w-12 animate-spin rounded-full border-4 border-(--muted-foreground) border-t-(--primary)"
+          aria-label="Loading artwork"
+        />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -101,23 +110,23 @@ export default function ObraDetalle() {
       </div>
 
       <section className="mx-auto w-full max-w-[1280px] px-4 pb-(--spacing-4xl)">
-        <div className="grid grid-cols-1 gap-(--spacing-2xl) lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-(--spacing-2xl) lg:grid-cols-2 lg:items-start">
 
-          {/* IMAGE - click opens lightbox */}
+          {/* IMAGE - click opens lightbox. Fixed height, does not stretch */}
           <button
             type="button"
             onClick={openLightbox}
-            className="cursor-zoom-in border bg-(--card) p-(--spacing-lg) text-left"
+            className="cursor-zoom-in w-full shrink-0 self-start border bg-(--card) p-(--spacing-lg) text-left"
           >
             <img
               src={obra.image}
               alt={obra.title}
-              className="w-full h-auto"
+              className="w-full h-auto max-h-[42vh] object-contain"
             />
           </button>
 
-          {/* INFO */}
-          <div>
+          {/* INFO - technique, title, metadata, add to collection */}
+          <div className="min-w-0">
             <span className="inline-block bg-(--primary) px-3 py-1 text-sm text-white">
               {obra.technique}
             </span>
@@ -132,15 +141,6 @@ export default function ObraDetalle() {
               <p><b>Movement:</b> {obra.movement}</p>
               <p><b>Dimensions:</b> {obra.dimensions}</p>
               <p><b>Location:</b> {obra.location}</p>
-            </div>
-
-            <div className="mt-8 max-w-[65ch]">
-              <h2 className="text-2xl mb-4">Description</h2>
-              {obra.description.split("\n\n").map((p, i) => (
-                <p key={i} className="mb-4 text-(--muted-foreground)">
-                  {p}
-                </p>
-              ))}
             </div>
 
             <button
@@ -159,8 +159,16 @@ export default function ObraDetalle() {
             >
              + Add to my collection
             </button>
+          </div>
 
-
+          {/* DESCRIPTION - spans both columns full width */}
+          <div className="min-w-0 col-span-full lg:col-span-2">
+            <h2 className="text-2xl mb-4">Description</h2>
+            {obra.description.split("\n\n").map((p, i) => (
+              <p key={i} className="mb-4 text-(--muted-foreground)">
+                {p}
+              </p>
+            ))}
           </div>
         </div>
       </section>
