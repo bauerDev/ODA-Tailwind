@@ -1,9 +1,9 @@
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { Providers } from "@/components/providers";
 
 import "./globals.css";
 import "@/styles/base.css";
-
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -14,11 +14,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <title>Oracle of Art</title>
       </head>
       <body className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-1 flex flex-col">
-          {children}
-        </main>
-        <Footer />
+        <Providers>
+          <Header />
+          <main className="flex-1 flex flex-col">
+            {children}
+          </main>
+          <Footer />
+        </Providers>
       </body>
     </html>
   );
