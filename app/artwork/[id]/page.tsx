@@ -37,6 +37,11 @@ export default function ObraDetalle() {
   const [addToCollectionLoading, setAddToCollectionLoading] = useState(false);
   const [addToCollectionMessage, setAddToCollectionMessage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [charactersResult, setCharactersResult] = useState<{
+    obra?: { title?: string; author?: string; date?: string; location?: string; objective?: string };
+    personajes?: Array<{ nombre?: string; disciplina?: string; ubicacion?: string; identificacion_visual?: string; representa?: string; objetivo_del_autor?: string }>;
+  } | null>(null);
+  const [charactersError, setCharactersError] = useState<string | null>(null);
   const [inCollections, setInCollections] = useState<Collection[]>([]);
   const [removingFromId, setRemovingFromId] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -194,71 +199,37 @@ export default function ObraDetalle() {
               </button>
               <button
                 type="button"
+                disabled={analyzing}
                 onClick={async () => {
                   if (!obra) return;
+                  setCharactersError(null);
+                  setCharactersResult(null);
                   try {
                     setAnalyzing(true);
-                    // fetch artwork image and send to existing ai-recognition endpoint
-                    const imgRes = await fetch(obra.image);
-                    if (!imgRes.ok) throw new Error('Failed to fetch image');
-                    const blob = await imgRes.blob();
-                    const file = new File([blob], 'image', { type: blob.type });
-                    const fd = new FormData();
-                    fd.append('image', file);
-
-                    const res = await fetch('/api/ai-recognition', { method: 'POST', body: fd });
+                    const res = await fetch(`/api/artworks/${id}/analyze-characters`, { method: "POST" });
                     const data = await res.json().catch(() => ({}));
-
-                    let appendText = '';
                     if (!res.ok) {
-                      appendText = '\n\n[Character analysis failed: ' + (data?.error || 'server error') + ']';
-                    } else if (data?.is_artwork === false) {
-                      appendText = '\n\nNo characters to analyze.';
-                    } else {
-                      const desc: string = (data?.description || '') as string;
-                      // Heuristic extraction: split into sentences and pick those mentioning people/figures
-                      const sentences = desc.split(/(?<=[.!?])\s+/);
-                      const personKeywords = ['figure','figures','man','woman','child','boy','girl','person','people','saint','servant','soldier','angel','portrait','kneeling','standing','seated'];
-                      const locationKeywords = ['left','right','center','centre','top','bottom','foreground','background','upper','lower','top-left','top-right','bottom-left','bottom-right','middle','centre-left','centre-right','center-left','center-right'];
-                      const roleKeywords = ['protagonist','central','background','supporting','focal','main','symbolic','allegorical','narrative'];
-
-                      const charSentences = sentences.filter((s) => personKeywords.some(k => new RegExp('\\b' + k + '\\b','i').test(s)));
-
-                      if (charSentences.length === 0) {
-                        appendText = '\n\nNo characters to analyze.';
-                      } else {
-                        const parts: string[] = ['\n\nCharacters identified:'];
-                        charSentences.forEach((s, idx) => {
-                          // location detection
-                          const locMatch = locationKeywords.find(k => new RegExp('\\b' + k + '\\b','i').test(s));
-                          const roleMatch = roleKeywords.find(k => new RegExp('\\b' + k + '\\b','i').test(s));
-                          const location = locMatch ? locMatch : 'location not specified';
-                          const role = roleMatch ? roleMatch : 'role not specified';
-
-                          // try to extract a short name or label (proper noun) from the sentence
-                          const nameMatch = s.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/);
-                          const name = nameMatch ? nameMatch[0] : null;
-
-                          const heading = name ? `${idx + 1}. ${name}` : `${idx + 1}. (unnamed)`;
-                          const summary = s.replace(/\s+/g, ' ').trim();
-
-                          parts.push(`${heading} — Location: ${location}; Role: ${role}\nDescription: ${summary}`);
-                        });
-
-                        appendText = parts.join('\n\n');
-                      }
+                      setCharactersError(data.error || data.message || "Analysis failed");
+                      return;
                     }
-
-                    setObra((prev) => prev ? { ...prev, description: (prev.description || '') + appendText } : prev);
+                    if (data.error) {
+                      setCharactersError(data.error);
+                      return;
+                    }
+                    setCharactersResult({
+                      obra: data.obra ?? {},
+                      personajes: Array.isArray(data.personajes) ? data.personajes : [],
+                    });
                   } catch (err) {
                     console.error(err);
+                    setCharactersError("Analysis failed");
                   } finally {
                     setAnalyzing(false);
                   }
                 }}
-                className="inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted)"
+                className="inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted) disabled:opacity-50"
               >
-                {analyzing ? 'Analyzing...' : 'Analyze characters'}
+                {analyzing ? "Analyzing…" : "Analyze characters"}
               </button>
             </div>
 
@@ -371,6 +342,61 @@ export default function ObraDetalle() {
                 {p}
               </p>
             ))}
+
+            {/* Character analysis - below description, same format as description */}
+            {(analyzing || charactersError || charactersResult) && (
+              <>
+                <h2 className="text-2xl mb-4 mt-8">Character analysis</h2>
+                {analyzing ? (
+                  <div className="flex flex-col items-center gap-4 py-8">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-(--muted) border-t-(--primary)" aria-hidden />
+                    <p className="text-(--muted-foreground)">Analyzing characters…</p>
+                  </div>
+                ) : charactersError ? (
+                  <p className="mb-4 text-red-600">{charactersError}</p>
+                ) : charactersResult?.personajes && charactersResult.personajes.length > 0 ? (
+                  charactersResult.personajes.map((p, idx) => (
+                    <div key={idx} className="mb-6 border border-(--border) bg-(--muted)/20 px-4 py-4 last:mb-0">
+                      <p className="mb-4 text-lg font-medium text-(--foreground)">{p.nombre ?? `Character ${idx + 1}`}</p>
+                      <div className="space-y-3">
+                        {p.disciplina != null && (
+                          <div>
+                            <p className="text-sm font-medium text-(--foreground)">Discipline</p>
+                            <p className="mt-0.5 text-(--muted-foreground)">{p.disciplina}</p>
+                          </div>
+                        )}
+                        {p.ubicacion != null && (
+                          <div>
+                            <p className="text-sm font-medium text-(--foreground)">Position in the work</p>
+                            <p className="mt-0.5 text-(--muted-foreground)">{p.ubicacion}</p>
+                          </div>
+                        )}
+                        {p.identificacion_visual != null && (
+                          <div>
+                            <p className="text-sm font-medium text-(--foreground)">Visual identification</p>
+                            <p className="mt-0.5 text-(--muted-foreground)">{p.identificacion_visual}</p>
+                          </div>
+                        )}
+                        {p.representa != null && (
+                          <div>
+                            <p className="text-sm font-medium text-(--foreground)">Symbolizes</p>
+                            <p className="mt-0.5 text-(--muted-foreground)">{p.representa}</p>
+                          </div>
+                        )}
+                        {p.objetivo_del_autor != null && (
+                          <div>
+                            <p className="text-sm font-medium text-(--foreground)">Author&apos;s intention</p>
+                            <p className="mt-0.5 text-(--muted-foreground)">{p.objetivo_del_autor}</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : charactersResult ? (
+                  <p className="mb-4 text-(--muted-foreground)">No characters identified.</p>
+                ) : null}
+              </>
+            )}
           </div>
         </div>
       </section>
