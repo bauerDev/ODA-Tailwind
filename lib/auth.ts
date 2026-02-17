@@ -29,6 +29,7 @@ export const authOptions: NextAuthOptions = {
             email: "admin",
             name: "Admin",
             isAdmin: true,
+            role: "admin",
           };
         }
 
@@ -40,11 +41,13 @@ export const authOptions: NextAuthOptions = {
         const ok = await verifyPassword(password, storedHash);
         if (!ok) return null;
 
+        const role = user.user_type === "docente" ? "Teacher" : "Student";
         return {
           id: String(user.id),
           email: user.email,
           name: user.name,
           isAdmin: !!user.is_admin,
+          role,
         };
       },
     }),
@@ -76,13 +79,16 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.id = String(dbUser.id);
             token.isAdmin = !!dbUser.is_admin;
+            token.role = dbUser.user_type === "docente" ? "Teacher" : "Student";
           } else {
             token.id = user.id;
             token.isAdmin = false;
+            token.role = "Student";
           }
         } else {
           token.id = user.id;
           token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
+          token.role = (user as { role?: string }).role ?? "Student";
         }
       }
       return token;
@@ -91,6 +97,7 @@ export const authOptions: NextAuthOptions = {
       if (session.user) {
         (session.user as { id?: string }).id = token.id as string;
         (session.user as { isAdmin?: boolean }).isAdmin = token.isAdmin as boolean;
+        (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },

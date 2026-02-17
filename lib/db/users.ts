@@ -40,6 +40,28 @@ export interface UserRow {
   created_at: Date;
 }
 
+export async function findAllUsers(): Promise<UserRow[]> {
+  const result = await pool.query(
+    "SELECT id, email, name, user_type, institution, is_admin, created_at FROM users ORDER BY id"
+  );
+  return result.rows;
+}
+
+/** Delete user by id. Removes their collections first (user_collections and collection_artworks). */
+export async function deleteUserById(userId: number): Promise<boolean> {
+  try {
+    await pool.query("DELETE FROM user_collections WHERE user_id = $1", [userId]);
+    const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [userId]);
+    return (result.rowCount ?? 0) > 0;
+  } catch (e) {
+    if (String((e as Error).message).includes('relation "user_collections" does not exist')) {
+      const result = await pool.query("DELETE FROM users WHERE id = $1 RETURNING id", [userId]);
+      return (result.rowCount ?? 0) > 0;
+    }
+    throw e;
+  }
+}
+
 export async function findUserByEmail(email: string): Promise<UserRow | null> {
   const result = await pool.query(
     "SELECT * FROM users WHERE LOWER(email) = LOWER($1)",

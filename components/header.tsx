@@ -98,9 +98,16 @@ export default function Header() {
                   {status === "loading" ? (
                     <p className="m-0 text-sm leading-5" style={{ fontFamily: "var(--font-family-heading)" }}>Loading…</p>
                   ) : session?.user ? (
-                    <p className="m-0 text-sm leading-5" style={{ fontFamily: "var(--font-family-heading)" }}>
-                      {session.user.name || session.user.email}
-                    </p>
+                    <div className="m-0">
+                      <p className="text-sm leading-5" style={{ fontFamily: "var(--font-family-heading)" }}>
+                        {session.user.name || session.user.email}
+                      </p>
+                      {session.user.role && (
+                        <p className="m-0 text-xs leading-4 opacity-80" style={{ color: "var(--muted-foreground)" }}>
+                          {session.user.role}
+                        </p>
+                      )}
+                    </div>
                   ) : (
                     <p className="m-0 text-sm leading-5" style={{ fontFamily: "var(--font-family-heading)" }}>
                       Sign in as<br />student or teacher
