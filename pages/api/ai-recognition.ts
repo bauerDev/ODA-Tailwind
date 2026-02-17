@@ -1,3 +1,10 @@
+/**
+ * API POST /api/ai-recognition
+ * Recibe una imagen por multipart/form-data (campo "image" o "file"), la redimensiona si supera ~90KB,
+ * la envía a OpenAI (modelo con visión) y devuelve un JSON con: is_artwork, title, author, year,
+ * movement, technique, dimensions, location, description (~2000 caracteres, párrafos con doble salto),
+ * image_url. Si is_artwork es false, el resto son null. Requiere OPENAI_API_KEY.
+ */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
 import type { File as FormidableFile } from 'formidable';
@@ -6,7 +13,7 @@ import OpenAI from 'openai';
 
 export const config = {
   api: {
-    bodyParser: false, // we use formidable to parse multipart/form-data
+    bodyParser: false, // Formidable parsea multipart/form-data
   },
 };
 
@@ -26,7 +33,6 @@ type AnalysisResult = {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end('Method not allowed');
 
-  // parse multipart/form-data with formidable (modern API)
   const form = formidable({ multiples: true });
 
   try {
@@ -53,13 +59,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const buffer = fs.readFileSync(filepath);
     const detected = (file as any).mimetype || detectMimeType(buffer) || '';
 
-    // Basic validations to protect OpenAI usage and avoid huge prompts
     const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
     if (!ALLOWED_MIMES.includes(detected)) {
       return res.status(400).json({ error: 'Unsupported image type. Use JPG, PNG, WEBP or GIF.' });
     }
 
-    // Resize/compress image if too large to stay under OpenAI context limit (128k tokens)
+    // Reducir tamaño para no superar límite de contexto de OpenAI (128k tokens)
     let bufferToSend: Buffer = Buffer.from(buffer);
     const MAX_BYTES_FOR_API = 90 * 1024; // ~90KB keeps us safely under token limit
     if (buffer.length > MAX_BYTES_FOR_API) {
@@ -90,6 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
+    // Prompt: respuesta en inglés, is_artwork, descripción ~2000 caracteres, párrafos con doble newline
     const systemPrompt = `You are an expert art historian. I will give you an image (base64) and you must return ONLY a valid JSON with exactly these keys: is_artwork, title, author, year, movement, technique, dimensions, location, description, image_url. "is_artwork" must be a boolean: true if the image clearly depicts an artwork (painting, sculpture, drawing, etc.) that can be identified or analyzed; false if the image does NOT depict an artwork (e.g. random photo, person, landscape, meme, screenshot, document, or anything that is not a work of art). When is_artwork is false, set all other fields to null. When is_artwork is true, all values must be in English. Each other key must be a simple text string (no Markdown, no HTML) or null if unknown. The "description" field must be approximately 2000 characters: a detailed analysis of the artwork including subject, composition, technique, historical context, and significance. Format the description with a blank line (double newline) between each paragraph. "image_url" must be a URL if available or null. Do not add any extra text, explanations, or delimiters; respond only with the raw JSON.`;
 
     const dataUrl = `data:${detected};base64,${imageBase64}`;
@@ -125,12 +131,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Strip markdown code block if present (e.g. ```json ... ```)
+    // Quitar envoltura ```json ... ``` si la IA la devolvió
     let textToParse = String(responseText).trim();
     const codeBlock = textToParse.match(/```(?:json)?\s*([\s\S]*?)```/m);
     if (codeBlock) textToParse = codeBlock[1].trim();
 
-    // Try parse JSON directly, otherwise extract JSON substring
+    // Intentar parsear JSON; si falla, extraer el primer {...} del texto
     let parsed: any = null;
     try {
       parsed = JSON.parse(textToParse);
@@ -149,6 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ raw: responseText });
     }
 
+    // Normalizar valores a string o null para la respuesta
     const coerceString = (v: any) => {
       if (v === undefined || v === null) return null;
       if (typeof v === 'string') return v.trim() === '' ? null : v;
@@ -179,13 +186,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
+/** Detecta el tipo MIME por magic bytes del buffer (fallback si formidable no lo envía). */
 function detectMimeType(buf: Buffer) {
   if (buf.length < 4) return null;
-  // JPEG
   if (buf[0] === 0xff && buf[1] === 0xd8) return 'image/jpeg';
-  // PNG
   if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) return 'image/png';
-  // GIF
   if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) return 'image/gif';
   return null;
 }
