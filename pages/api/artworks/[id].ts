@@ -1,8 +1,8 @@
 /**
  * API /api/artworks/[id]
- * GET: Devuelve una sola obra por id.
- * PUT/PATCH: Actualiza la obra con los campos enviados en el body.
- * DELETE: Elimina la obra de la base de datos.
+ * GET: Devuelve una sola obra por id (página de detalle /artwork/[id]).
+ * PUT/PATCH: Actualiza la obra; solo se modifican los campos enviados en el body (COALESCE).
+ * DELETE: Elimina la obra de la base de datos (usado desde manage-artworks).
  */
 import { NextApiRequest, NextApiResponse } from "next";
 import { pool } from "../../../lib/db/db";
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Invalid ID" });
   }
 
-  // GET: obtener una obra por id
+  // GET: obtener una obra por id (público)
   if (req.method === "GET") {
     try {
       const result = await pool.query("SELECT * FROM artworks WHERE id = $1", [id]);
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // DELETE: borrar obra por id
+  // DELETE: borrar obra por id (referencias en collection_artworks pueden quedar huérfanas)
   if (req.method === "DELETE") {
     try {
       const result = await pool.query("DELETE FROM artworks WHERE id = $1 RETURNING id", [id]);
@@ -75,7 +75,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // Método no permitido
   res.setHeader("Allow", ["GET", "PUT", "PATCH", "DELETE"]);
   res.status(405).json({ error: `Method ${req.method} not allowed` });
 }

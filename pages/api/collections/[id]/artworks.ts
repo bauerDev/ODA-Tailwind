@@ -1,3 +1,9 @@
+/**
+ * API /api/collections/[id]/artworks
+ * POST: Añade una obra a la colección (body: { artwork_id }). Solo si la colección es del usuario.
+ * DELETE: Quita la obra de la colección (body: { artwork_id }). Misma comprobación de propiedad.
+ * id en la URL = collection_id. Requiere sesión.
+ */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
