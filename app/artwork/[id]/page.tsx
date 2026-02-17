@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 interface Artwork {
   id: number;
@@ -11,10 +13,13 @@ interface Artwork {
   movement: string;
   technique: string;
   dimensions: string;
-  location: string;
+  location?: string;
+  ubication?: string;
   description: string;
   image: string;
 }
+
+type Collection = { id: number; name: string };
 
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 4;
@@ -24,10 +29,25 @@ export default function ObraDetalle() {
   const params = useParams() as { id: string };
   const id = params.id;
 
+  const { data: session, status } = useSession();
   const [obra, setObra] = useState<Artwork | null>(null);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [addToCollectionOpen, setAddToCollectionOpen] = useState(false);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [addToCollectionLoading, setAddToCollectionLoading] = useState(false);
+  const [addToCollectionMessage, setAddToCollectionMessage] = useState<string | null>(null);
+  const [inCollections, setInCollections] = useState<Collection[]>([]);
+  const [removingFromId, setRemovingFromId] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+
+  const fetchInCollections = useCallback(() => {
+    if (!id || !session?.user) return;
+    fetch(`/api/artworks/${id}/collections`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setInCollections)
+      .catch(() => setInCollections([]));
+  }, [id, session?.user]);
 
   useEffect(() => {
     if (!id) return;
@@ -75,6 +95,23 @@ export default function ObraDetalle() {
       document.body.style.overflow = prevOverflow;
     };
   }, [lightboxOpen, closeLightbox, zoomIn, zoomOut]);
+
+  useEffect(() => {
+    if (status === "authenticated" && id) {
+      fetchInCollections();
+    } else {
+      setInCollections([]);
+    }
+  }, [status, id, fetchInCollections]);
+
+  useEffect(() => {
+    if (addToCollectionOpen && session?.user) {
+      fetch("/api/collections")
+        .then((res) => (res.ok ? res.json() : []))
+        .then(setCollections)
+        .catch(() => setCollections([]));
+    }
+  }, [addToCollectionOpen, session?.user]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -140,22 +177,15 @@ export default function ObraDetalle() {
               <p><b>Year:</b> {obra.year}</p>
               <p><b>Movement:</b> {obra.movement}</p>
               <p><b>Dimensions:</b> {obra.dimensions}</p>
-              <p><b>Location:</b> {obra.location}</p>
+              <p><b>Location:</b> {obra.location ?? obra.ubication ?? "—"}</p>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-(--spacing-sm)">
               <button
-                onClick={async () => {
-                  await fetch("/api/collections", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      user_id: 1,
-                      artwork_id: obra.id,
-                    }),
-                  });
-
-                  alert("Artwork added to your collection");
+                type="button"
+                onClick={() => {
+                  setAddToCollectionMessage(null);
+                  setAddToCollectionOpen(true);
                 }}
                 className="inline-flex items-center gap-1 bg-(--primary) px-4 py-2 text-sm text-(--primary-foreground) transition hover:opacity-90"
               >
@@ -168,6 +198,106 @@ export default function ObraDetalle() {
                 Analyze characters
               </button>
             </div>
+
+            {status === "authenticated" && inCollections.length > 0 && (
+              <div className="mt-4">
+                <p className="mb-2 text-sm font-medium text-(--muted-foreground)">In your collections</p>
+                <div className="flex flex-wrap gap-2">
+                  {inCollections.map((col) => (
+                    <span
+                      key={col.id}
+                      className="inline-flex items-center gap-1 border border-(--border) bg-(--muted)/50 px-3 py-1.5 text-sm text-(--foreground)"
+                    >
+                      <Link href={`/my-collection/${col.id}`} className="hover:underline">
+                        {col.name}
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={removingFromId === col.id}
+                        className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-(--muted-foreground) hover:bg-(--muted) hover:text-(--foreground) disabled:opacity-50"
+                        aria-label={`Remove from ${col.name}`}
+                        onClick={async () => {
+                          setRemovingFromId(col.id);
+                          const res = await fetch(`/api/collections/${col.id}/artworks`, {
+                            method: "DELETE",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ artwork_id: obra.id }),
+                          });
+                          setRemovingFromId(null);
+                          if (res.ok) fetchInCollections();
+                        }}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Add to collection modal */}
+            {addToCollectionOpen && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddToCollectionOpen(false)}>
+                <div className="w-full max-w-md rounded-lg border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg" onClick={(e) => e.stopPropagation()}>
+                  <div className="mb-4 flex items-center justify-between">
+                    <h3 className="font-(--font-family-heading) text-xl">Add to collection</h3>
+                    <button type="button" className="text-(--muted-foreground) hover:text-(--foreground)" onClick={() => setAddToCollectionOpen(false)} aria-label="Close">×</button>
+                  </div>
+                  {status !== "authenticated" ? (
+                    <>
+                      <p className="text-(--muted-foreground)">Sign in to add this artwork to a collection.</p>
+                      <Link href="/login" className="mt-4 inline-block text-(--primary)">Sign in</Link>
+                    </>
+                  ) : collections.length === 0 ? (
+                    <>
+                      <p className="text-(--muted-foreground)">You haven&apos;t created any collections yet. Create one first to add artworks.</p>
+                      <Link href="/my-collection" className="mt-4 inline-block bg-(--primary) px-4 py-2 text-sm text-(--primary-foreground)">Go to My Collection</Link>
+                    </>
+                  ) : (
+                    <>
+                      {addToCollectionMessage && <p className="mb-2 text-sm text-green-600">{addToCollectionMessage}</p>}
+                      <p className="mb-2 text-sm text-(--muted-foreground)">Choose a collection to add this artwork to:</p>
+                      <ul className="max-h-60 overflow-y-auto border border-(--border)">
+                        {collections.map((col) => (
+                          <li key={col.id}>
+                            <button
+                              type="button"
+                              disabled={addToCollectionLoading}
+                              className="w-full cursor-pointer px-4 py-2 text-left text-(--foreground) hover:bg-(--muted) disabled:opacity-50"
+                              onClick={async () => {
+                                setAddToCollectionLoading(true);
+                                setAddToCollectionMessage(null);
+                                const res = await fetch(`/api/collections/${col.id}/artworks`, {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ artwork_id: obra.id }),
+                                });
+                                const data = await res.json().catch(() => ({}));
+                                setAddToCollectionLoading(false);
+                                if (res.ok) {
+                                  setAddToCollectionMessage("Added to " + col.name);
+                                  fetchInCollections();
+                                } else {
+                                  setAddToCollectionMessage(data.error || "Failed to add");
+                                }
+                              }}
+                            >
+                              {col.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href="/my-collection"
+                        className="mt-4 inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted)"
+                      >
+                        Create new collection
+                      </Link>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* DESCRIPTION - spans both columns full width */}
