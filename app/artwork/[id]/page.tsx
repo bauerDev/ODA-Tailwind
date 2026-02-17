@@ -36,6 +36,7 @@ export default function ObraDetalle() {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [addToCollectionLoading, setAddToCollectionLoading] = useState(false);
   const [addToCollectionMessage, setAddToCollectionMessage] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
   const [inCollections, setInCollections] = useState<Collection[]>([]);
   const [removingFromId, setRemovingFromId] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -193,9 +194,71 @@ export default function ObraDetalle() {
               </button>
               <button
                 type="button"
+                onClick={async () => {
+                  if (!obra) return;
+                  try {
+                    setAnalyzing(true);
+                    // fetch artwork image and send to existing ai-recognition endpoint
+                    const imgRes = await fetch(obra.image);
+                    if (!imgRes.ok) throw new Error('Failed to fetch image');
+                    const blob = await imgRes.blob();
+                    const file = new File([blob], 'image', { type: blob.type });
+                    const fd = new FormData();
+                    fd.append('image', file);
+
+                    const res = await fetch('/api/ai-recognition', { method: 'POST', body: fd });
+                    const data = await res.json().catch(() => ({}));
+
+                    let appendText = '';
+                    if (!res.ok) {
+                      appendText = '\n\n[Character analysis failed: ' + (data?.error || 'server error') + ']';
+                    } else if (data?.is_artwork === false) {
+                      appendText = '\n\nNo characters to analyze.';
+                    } else {
+                      const desc: string = (data?.description || '') as string;
+                      // Heuristic extraction: split into sentences and pick those mentioning people/figures
+                      const sentences = desc.split(/(?<=[.!?])\s+/);
+                      const personKeywords = ['figure','figures','man','woman','child','boy','girl','person','people','saint','servant','soldier','angel','portrait','kneeling','standing','seated'];
+                      const locationKeywords = ['left','right','center','centre','top','bottom','foreground','background','upper','lower','top-left','top-right','bottom-left','bottom-right','middle','centre-left','centre-right','center-left','center-right'];
+                      const roleKeywords = ['protagonist','central','background','supporting','focal','main','symbolic','allegorical','narrative'];
+
+                      const charSentences = sentences.filter((s) => personKeywords.some(k => new RegExp('\\b' + k + '\\b','i').test(s)));
+
+                      if (charSentences.length === 0) {
+                        appendText = '\n\nNo characters to analyze.';
+                      } else {
+                        const parts: string[] = ['\n\nCharacters identified:'];
+                        charSentences.forEach((s, idx) => {
+                          // location detection
+                          const locMatch = locationKeywords.find(k => new RegExp('\\b' + k + '\\b','i').test(s));
+                          const roleMatch = roleKeywords.find(k => new RegExp('\\b' + k + '\\b','i').test(s));
+                          const location = locMatch ? locMatch : 'location not specified';
+                          const role = roleMatch ? roleMatch : 'role not specified';
+
+                          // try to extract a short name or label (proper noun) from the sentence
+                          const nameMatch = s.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+){0,2})/);
+                          const name = nameMatch ? nameMatch[0] : null;
+
+                          const heading = name ? `${idx + 1}. ${name}` : `${idx + 1}. (unnamed)`;
+                          const summary = s.replace(/\s+/g, ' ').trim();
+
+                          parts.push(`${heading} — Location: ${location}; Role: ${role}\nDescription: ${summary}`);
+                        });
+
+                        appendText = parts.join('\n\n');
+                      }
+                    }
+
+                    setObra((prev) => prev ? { ...prev, description: (prev.description || '') + appendText } : prev);
+                  } catch (err) {
+                    console.error(err);
+                  } finally {
+                    setAnalyzing(false);
+                  }
+                }}
                 className="inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted)"
               >
-                Analyze characters
+                {analyzing ? 'Analyzing...' : 'Analyze characters'}
               </button>
             </div>
 
