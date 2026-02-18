@@ -70,7 +70,7 @@ export default function ArtworkPreview() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-8">
         <p className="text-(--muted-foreground)">No recognition data available. Analyze an image first.</p>
-        <a href="/ai-recognition" className="rounded-md bg-(--primary) px-4 py-2 text-(--primary-foreground)">
+        <a href="/ai-recognition" className="rounded-none bg-(--primary) px-4 py-2 text-(--primary-foreground)">
           Back to AI Recognition
         </a>
       </div>
@@ -150,7 +150,7 @@ export default function ArtworkPreview() {
           <button
             type="button"
             onClick={closeLightbox}
-            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-none bg-white/20 text-white transition hover:bg-white/30"
             aria-label="Close"
           >
             ×

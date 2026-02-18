@@ -172,7 +172,7 @@ export default function GaleriaPage() {
 
           {/* Dropdown panel: Author, Movement, Year, Technique with checkboxes */}
           {panelOpen && (
-            <div className="mt-(--spacing-lg) rounded-sm bg-[#f5f5f0] p-(--spacing-lg) shadow-sm">
+            <div className="mt-(--spacing-lg) rounded-none bg-[#f5f5f0] p-(--spacing-lg) shadow-sm">
               <div className="grid grid-cols-1 gap-x-12 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
                 <div>
                   <h3 className="mb-3 font-(--font-family-heading) text-[15px] text-[#1a1a1a]">

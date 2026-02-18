@@ -43,17 +43,20 @@ export default async function handler(
       return res.status(400).json({ error: "Artwork has no image URL" });
     }
 
-    const systemPrompt = `Generate the character information for the artwork "${title}" by ${author} in valid JSON format.
+    const systemPrompt = `Analyze the artwork "${title}" by ${author} using the provided image and return valid JSON.
 
 Mandatory requirements:
 - The JSON must have a root key "obra" with general information about the painting (title, author, date, location, and overall objective).
-- There must be a key "personajes" that is an array of objects.
-- Each character must include at least: "nombre", "disciplina", "ubicacion" (approximate position within the artwork), "identificacion_visual" (how the character is recognized in the painting), "representa" (what idea, philosophical current or concept they symbolize in the work), "objetivo_del_autor" (the concrete intention of ${author} in including that character).
-- The information must be based on the most accepted historiographical consensus, avoiding unnecessary speculation.
+- The "obra" object MUST also include a boolean field "has_characters".
+- There must be a key "personajes" that is an array.
+- If the image does NOT contain identifiable characters/figures (e.g. abstract art, landscape, still life, architecture without people), set "obra.has_characters" to false and set "personajes" to [].
+- If you are not sure, prefer "obra.has_characters": false and "personajes": [] (do NOT guess).
+- Only include characters that are clearly present in the image. Do not infer characters from the title, author, or common art-history associations.
+- If "obra.has_characters" is true, each character must include at least: "nombre", "disciplina", "ubicacion" (approximate position within the artwork), "identificacion_visual" (how the character is recognized in the painting), "representa" (what idea, philosophical current or concept they symbolize in the work), "objetivo_del_autor" (the concrete intention of ${author} in including that character).
+- The information must be based on the most accepted historiographical consensus, avoiding unnecessary speculation. If the character identity is not known, do not invent it; set "obra.has_characters" to false and return an empty array.
 - The result must be exclusively JSON, with no additional explanations, comments or text outside the block.
 - The JSON must be readable, coherent and suitable for academic or technical use (web, API or database).
-- Do not include fictitious characters or repeat information between fields. Use clear and precise language in English for all fields.
-- ONLY the "nombre" field (character names) must be in Spanish. All other fields (obra, disciplina, ubicacion, identificacion_visual, representa, objetivo_del_autor) must be in English. Use Spanish forms for names: Platón, Aristóteles, Euclides, Pitágoras, Miguel Ángel, Homero (never Plato, Aristotle, Euclid, Pythagoras, Michelangelo, Homer).`;
+- Do not include fictitious characters or repeat information between fields. Use clear and precise language in English for all fields.`;
 
     const userContent = `Analyze the image of "${title}" by ${author} and return only the JSON as specified.`;
 
@@ -96,6 +99,20 @@ Mandatory requirements:
 
     if (!parsed) {
       return res.status(200).json({ raw: responseText, error: "Could not parse JSON from model response" });
+    }
+
+    // Normalize output shape for frontend.
+    if (!parsed.obra || typeof parsed.obra !== "object") {
+      parsed.obra = { title, author };
+    }
+    const personajes = (parsed as any).personajes;
+    if (!Array.isArray(personajes)) {
+      (parsed as any).personajes = [];
+    } else {
+      // Remove empty/invalid items.
+      (parsed as any).personajes = personajes.filter(
+        (p: any) => p && typeof p === "object" && typeof p.nombre === "string" && p.nombre.trim().length > 0
+      );
     }
 
     return res.status(200).json(parsed);

@@ -153,7 +153,7 @@ export default function Reconocimiento() {
                                 <h2 className="mb-(--spacing-sm) font-(--font-family-heading) text-2xl">Upload an image</h2>
                                 <p className="mb-(--spacing-lg) text-(--muted-foreground)">PNG, JPG, WEBP up to 10MB</p>
 
-                                <div className="relative overflow-hidden rounded-lg border-2 border-dashed border-(--border) bg-(--background) p-(--spacing-3xl) text-center">
+                                <div className="relative overflow-hidden rounded-none border-2 border-dashed border-(--border) bg-(--background) p-(--spacing-3xl) text-center">
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -170,15 +170,15 @@ export default function Reconocimiento() {
 
                                 {filePreview && (
                                     <div className="mt-(--spacing-lg)">
-                                        <div className="relative mb-(--spacing-md) w-full max-w-full overflow-hidden rounded-lg border border-(--border) bg-(--background)">
+                                        <div className="relative mb-(--spacing-md) w-full max-w-full overflow-hidden rounded-none border border-(--border) bg-(--background)">
                                             <img src={filePreview} alt="Preview" className="block w-full max-h-[400px] object-contain" />
-                                            <button onClick={removeImage} className="absolute right-(--spacing-md) top-(--spacing-md) flex h-10 w-10 items-center justify-center rounded-full bg-(--foreground) text-(--background)">X</button>
+                                            <button onClick={removeImage} className="absolute right-(--spacing-md) top-(--spacing-md) flex h-10 w-10 items-center justify-center rounded-none bg-(--foreground) text-(--background)">X</button>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="mt-(--spacing-lg) flex justify-center">
-                                    <button onClick={analyze} disabled={!fileObj || loading} className="inline-flex items-center gap-(--spacing-sm) rounded-md bg-(--primary) px-(--spacing-2xl) py-(--spacing-md) font-(--font-family-heading) text-lg text-(--primary-foreground)">
+                                    <button onClick={analyze} disabled={!fileObj || loading} className="inline-flex items-center gap-(--spacing-sm) rounded-none bg-(--primary) px-(--spacing-2xl) py-(--spacing-md) font-(--font-family-heading) text-lg text-(--primary-foreground)">
                                         {loading ? "Analyzing…" : "Analyze artwork"}
                                     </button>
                                 </div>
@@ -228,7 +228,7 @@ export default function Reconocimiento() {
                                         </div>
 
                                         <div className="mt-(--spacing-xl) flex flex-wrap gap-(--spacing-md) border-t border-(--border) pt-(--spacing-xl)">
-                                            <a href={result.image_url ?? filePreview ?? '#'} target="_blank" rel="noreferrer" className="inline-block min-w-[150px] flex-1 rounded-md bg-(--primary) px-(--spacing-lg) py-(--spacing-sm) text-center font-(--font-family-heading) text-(--primary-foreground)">Open image</a>
+                                            <a href={result.image_url ?? filePreview ?? '#'} target="_blank" rel="noreferrer" className="inline-block min-w-[150px] flex-1 rounded-none bg-(--primary) px-(--spacing-lg) py-(--spacing-sm) text-center font-(--font-family-heading) text-(--primary-foreground)">Open image</a>
                                         </div>
                                     </div>
                                 )}

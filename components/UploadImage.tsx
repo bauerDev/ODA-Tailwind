@@ -13,16 +13,74 @@ export default function UploadImage() {
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /** Converts an image file to WebP format */
+  async function convertToWebP(file: File): Promise<File> {
+    return new Promise((resolve, reject) => {
+      // If already WebP, return as is
+      if (file.type === "image/webp") {
+        resolve(file);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          
+          if (!ctx) {
+            reject(new Error("Canvas context not available"));
+            return;
+          }
+
+          // Draw image on canvas
+          ctx.drawImage(img, 0, 0);
+
+          // Convert to WebP blob
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) {
+                reject(new Error("Failed to convert image to WebP"));
+                return;
+              }
+              
+              // Create a new File object with WebP extension
+              const webpFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
+                type: "image/webp",
+                lastModified: Date.now(),
+              });
+              
+              resolve(webpFile);
+            },
+            "image/webp",
+            0.9 // Quality: 0.9 (90%) for good balance between quality and file size
+          );
+        };
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Failed to read file"));
+      reader.readAsDataURL(file);
+    });
+  }
+
   /** Uploads file to Cloudinary with preset "oda-images" and updates state based on response */
   async function uploadImage(file: File) {
     setUploading(true);
     setError(null);
     setResultUrl(null);
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("upload_preset", "oda-images");
-
+    
     try {
+      // Convert to WebP before uploading
+      const webpFile = await convertToWebP(file);
+      
+      const formData = new FormData();
+      formData.append("file", webpFile);
+      formData.append("upload_preset", "oda-images");
+
       const res = await fetch(
         "https://api.cloudinary.com/v1_1/do2td5gs1/image/upload",
         {
@@ -37,7 +95,7 @@ export default function UploadImage() {
         setError(data.error?.message || "Error uploading image");
       }
     } catch (e) {
-      setError("Connection error while uploading");
+      setError(e instanceof Error ? e.message : "Connection error while uploading");
     } finally {
       setUploading(false);
     }
@@ -63,7 +121,7 @@ export default function UploadImage() {
 
       {/* Main block: card with upload zone and results */}
       <div className="mx-auto max-w-2xl">
-        <div className="rounded-xl border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg shadow-black/5 transition-shadow hover:shadow-xl hover:shadow-black/10">
+        <div className="rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg shadow-black/5 transition-shadow hover:shadow-xl hover:shadow-black/10">
               <h2 className="mb-(--spacing-sm) font-(--font-family-heading) text-2xl text-(--foreground)">
                 Select file
               </h2>
@@ -73,7 +131,7 @@ export default function UploadImage() {
 
               {/* Label wrapping input: clickable zone with hover/uploading styles */}
               <label
-                className={`relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-xl border-2 border-dashed p-(--spacing-3xl) text-center transition-all duration-200 ${
+                className={`relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-none border-2 border-dashed p-(--spacing-3xl) text-center transition-all duration-200 ${
                   uploading
                     ? "cursor-not-allowed border-(--muted-foreground) bg-(--muted) opacity-80"
                     : "border-(--border) bg-(--background) hover:border-(--primary) hover:bg-[rgba(102,20,20,0.04)] hover:border-opacity-80"
@@ -108,7 +166,7 @@ export default function UploadImage() {
                     <span className="font-medium text-(--primary)">Click to upload</span> or drag
                   </p>
                   <p className="text-sm text-(--muted-foreground)">
-                    PNG, JPG, WEBP
+                    PNG, JPG, WEBP (automatically converted to WebP)
                   </p>
                 </div>
               </label>
@@ -116,20 +174,20 @@ export default function UploadImage() {
               {/* Message while uploading */}
               {uploading && (
                 <p className="mt-(--spacing-md) text-center text-sm text-(--muted-foreground)">
-                  Uploading…
+                  Converting to WebP and uploading…
                 </p>
               )}
 
               {/* Error message if upload fails */}
               {error && (
-                <div className="mt-(--spacing-lg) rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
+                <div className="mt-(--spacing-lg) rounded-none border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700 shadow-sm">
                   {error}
                 </div>
               )}
 
               {/* After successful upload: show URL to copy and use in Admin when creating/editing artwork */}
               {resultUrl && (
-                <div className="mt-(--spacing-lg) rounded-lg border border-(--border) bg-(--muted) p-(--spacing-lg) shadow-inner">
+                <div className="mt-(--spacing-lg) rounded-none border border-(--border) bg-(--muted) p-(--spacing-lg) shadow-inner">
                   <p className="mb-2 font-(--font-family-heading) text-sm text-(--foreground)">
                     Public URL:
                   </p>
@@ -137,7 +195,7 @@ export default function UploadImage() {
                     type="text"
                     readOnly
                     value={resultUrl}
-                    className="w-full rounded-md border border-(--border) bg-(--background) px-3 py-2 text-sm text-(--foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)/20"
+                    className="w-full rounded-none border border-(--border) bg-(--background) px-3 py-2 text-sm text-(--foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)/20"
                   />
                   <p className="mt-2 text-xs text-(--muted-foreground)">
                     Copy this URL and use it in the «Image URL» field when creating or editing an artwork in Admin.
@@ -149,7 +207,7 @@ export default function UploadImage() {
               <div className="mt-(--spacing-xl) flex flex-wrap gap-(--spacing-md)">
                 <Link
                   href="/admin"
-                  className="inline-flex items-center gap-(--spacing-sm) rounded-lg border border-(--border) bg-(--background) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) transition-all duration-200 hover:bg-(--muted) hover:border-(--primary)/50"
+                  className="inline-flex items-center gap-(--spacing-sm) rounded-none border border-(--border) bg-(--background) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) transition-all duration-200 hover:bg-(--muted) hover:border-(--primary)/50"
                 >
                   ← Back to Admin panel
                 </Link>

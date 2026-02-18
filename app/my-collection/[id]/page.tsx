@@ -85,7 +85,7 @@ export default function CollectionDetailPage() {
           <p className="mb-(--spacing-xl) text-(--muted-foreground)">{collection.description}</p>
         )}
         {artworks.length === 0 ? (
-          <div className="rounded-lg border border-(--border) bg-(--card) py-(--spacing-4xl) text-center">
+          <div className="rounded-none border border-(--border) bg-(--card) py-(--spacing-4xl) text-center">
             <p className="text-(--muted-foreground)">No artworks in this collection yet.</p>
             <p className="mt-2 text-sm text-(--muted-foreground)">Add artworks from the gallery or artwork detail page.</p>
             <Link href="/gallery" className="mt-4 inline-block text-(--primary)">Browse gallery</Link>
@@ -93,7 +93,7 @@ export default function CollectionDetailPage() {
         ) : (
           <div className="grid grid-cols-1 gap-(--spacing-xl) sm:grid-cols-2 lg:grid-cols-3">
             {artworks.map((artwork) => (
-              <Link key={artwork.id} href={`/artwork/${artwork.id}`} className="group block overflow-hidden rounded-lg border border-(--border) bg-(--card) transition hover:shadow-md">
+              <Link key={artwork.id} href={`/artwork/${artwork.id}`} className="group block overflow-hidden rounded-none border border-(--border) bg-(--card) transition hover:shadow-md">
                 <div className="aspect-[4/3] overflow-hidden bg-(--muted)">
                   <img src={artwork.image} alt={artwork.title} className="h-full w-full object-cover transition group-hover:scale-105" />
                 </div>

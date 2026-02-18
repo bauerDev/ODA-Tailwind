@@ -34,7 +34,7 @@ export default function Home() {
               </h2>
 
               <div className="grid grid-cols-1 gap-(--spacing-xl) md:grid-cols-2 lg:grid-cols-3">
-                  <a href="/gallery" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                  <a href="/gallery" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-none transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
                       <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
                           <img
                               src="/images/features/explorar-galeria.webp"
@@ -55,7 +55,7 @@ export default function Home() {
                       </div>
                   </a>
 
-                  <a href="/ai-recognition" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                  <a href="/ai-recognition" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-none transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
                       <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
                           <img
                               src="/images/features/reconocimiento-ia.webp"
@@ -76,7 +76,7 @@ export default function Home() {
                       </div>
                   </a>
 
-                  <a href="/my-collection" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-lg transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
+                  <a href="/my-collection" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-none transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
                       <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
                           <img
                               src="/images/features/mi-coleccion.webp"

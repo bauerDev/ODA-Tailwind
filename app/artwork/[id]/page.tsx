@@ -248,7 +248,7 @@ export default function ObraDetalle() {
                       <button
                         type="button"
                         disabled={removingFromId === col.id}
-                        className="ml-1 flex h-5 w-5 items-center justify-center rounded-full text-(--muted-foreground) hover:bg-(--muted) hover:text-(--foreground) disabled:opacity-50"
+                        className="ml-1 flex h-5 w-5 items-center justify-center rounded-none text-(--muted-foreground) hover:bg-(--muted) hover:text-(--foreground) disabled:opacity-50"
                         aria-label={`Remove from ${col.name}`}
                         onClick={async () => {
                           setRemovingFromId(col.id);
@@ -272,7 +272,7 @@ export default function ObraDetalle() {
             {/* Add to collection modal */}
             {addToCollectionOpen && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setAddToCollectionOpen(false)}>
-                <div className="w-full max-w-md rounded-lg border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg" onClick={(e) => e.stopPropagation()}>
+                <div className="w-full max-w-md rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg" onClick={(e) => e.stopPropagation()}>
                   <div className="mb-4 flex items-center justify-between">
                     <h3 className="font-(--font-family-heading) text-xl">Add to collection</h3>
                     <button type="button" className="text-(--muted-foreground) hover:text-(--foreground)" onClick={() => setAddToCollectionOpen(false)} aria-label="Close">×</button>
@@ -393,7 +393,7 @@ export default function ObraDetalle() {
                     </div>
                   ))
                 ) : charactersResult ? (
-                  <p className="mb-4 text-(--muted-foreground)">No characters identified.</p>
+                  <p className="mb-4 text-(--muted-foreground)">No se encontraron personajes en la obra.</p>
                 ) : null}
               </>
             )}
@@ -418,7 +418,7 @@ export default function ObraDetalle() {
             <button
               type="button"
               onClick={zoomOut}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
+              className="flex h-10 w-10 items-center justify-center rounded-none bg-white/20 text-white transition hover:bg-white/30"
               aria-label="Zoom out"
             >
               −
@@ -429,7 +429,7 @@ export default function ObraDetalle() {
             <button
               type="button"
               onClick={zoomIn}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
+              className="flex h-10 w-10 items-center justify-center rounded-none bg-white/20 text-white transition hover:bg-white/30"
               aria-label="Zoom in"
             >
               +
@@ -437,7 +437,7 @@ export default function ObraDetalle() {
             <button
               type="button"
               onClick={closeLightbox}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30"
+              className="flex h-10 w-10 items-center justify-center rounded-none bg-white/20 text-white transition hover:bg-white/30"
               aria-label="Close"
             >
               ×

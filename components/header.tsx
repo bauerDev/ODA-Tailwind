@@ -70,7 +70,7 @@ export default function Header() {
 
             <div
               id="user-menu"
-              className={`absolute right-0 top-full z-50 mt-2 block w-48 min-w-[200px] rounded-md p-0 shadow-lg ${isMenuOpen ? "block" : "hidden"}`}
+              className={`absolute right-0 top-full z-50 mt-2 block w-48 min-w-[200px] rounded-none p-0 shadow-lg ${isMenuOpen ? "block" : "hidden"}`}
               style={{
                 backgroundColor: "var(--card)",
                 border: "1px solid var(--border)",

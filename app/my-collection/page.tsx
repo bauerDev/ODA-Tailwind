@@ -116,7 +116,7 @@ export default function MiColeccion() {
 
       <section className="py-(--spacing-3xl)">
         <div className="mx-auto w-full max-w-[1280px] px-4">
-          <div className="mb-(--spacing-3xl) rounded-lg border-2 border-dashed border-(--border) bg-(--card) p-(--spacing-3xl) text-center transition-all duration-200 hover:border-(--primary) hover:bg-[rgba(102,20,20,0.02)]">
+          <div className="mb-(--spacing-3xl) rounded-none border-2 border-dashed border-(--border) bg-(--card) p-(--spacing-3xl) text-center transition-all duration-200 hover:border-(--primary) hover:bg-[rgba(102,20,20,0.02)]">
             <div className="mx-auto max-w-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-(--spacing-lg) h-12 w-12 text-(--primary)">
                 <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -126,7 +126,7 @@ export default function MiColeccion() {
               <p className="mb-(--spacing-xl) leading-relaxed text-(--muted-foreground)">
                 Organize your favorite artworks into personalized thematic collections.
               </p>
-              <button type="button" className="cursor-pointer rounded-md bg-(--primary) px-(--spacing-2xl) py-(--spacing-md) font-(--font-family-heading) text-lg text-(--primary-foreground) transition-all duration-200 hover:opacity-90" onClick={openModal}>
+              <button type="button" className="cursor-pointer rounded-none bg-(--primary) px-(--spacing-2xl) py-(--spacing-md) font-(--font-family-heading) text-lg text-(--primary-foreground) transition-all duration-200 hover:opacity-90" onClick={openModal}>
                 Create collection
               </button>
             </div>
@@ -134,7 +134,7 @@ export default function MiColeccion() {
 
           <div className="grid grid-cols-1 gap-(--spacing-xl) sm:grid-cols-2 lg:grid-cols-3">
             {collections.length === 0 ? (
-              <div className="col-span-full rounded-lg border border-(--border) bg-(--card) px-(--spacing-xl) py-(--spacing-4xl) text-center">
+              <div className="col-span-full rounded-none border border-(--border) bg-(--card) px-(--spacing-xl) py-(--spacing-4xl) text-center">
                 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-(--spacing-lg) h-16 w-16 text-(--muted-foreground) opacity-50">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
@@ -152,7 +152,7 @@ export default function MiColeccion() {
                 <Link
                   key={col.id}
                   href={`/my-collection/${col.id}`}
-                  className="flex flex-col rounded-lg border border-(--border) bg-(--card) p-(--spacing-xl) transition-all duration-200 hover:border-(--primary) hover:shadow-md"
+                  className="flex flex-col rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) transition-all duration-200 hover:border-(--primary) hover:shadow-md"
                 >
                   <div className="mb-2 flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-(--primary)">
@@ -173,7 +173,7 @@ export default function MiColeccion() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-(--spacing-lg)" onClick={closeModal}>
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-(--card) shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-none bg-(--card) shadow-lg" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-(--border) p-(--spacing-xl)">
               <h2 className="font-(--font-family-heading) text-2xl">Create new collection</h2>
               <button type="button" className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-(--spacing-xs) text-(--muted-foreground) hover:text-(--foreground)" onClick={closeModal} aria-label="Close">
@@ -201,8 +201,8 @@ export default function MiColeccion() {
                 </select>
               </div>
               <div className="flex gap-(--spacing-md) pt-(--spacing-md)">
-                <button type="button" className="flex-1 cursor-pointer rounded-md border border-(--border) bg-transparent px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) hover:bg-(--muted)" onClick={closeModal}>Cancel</button>
-                <button type="submit" disabled={submitting} className="flex-1 cursor-pointer rounded-md border-0 bg-(--primary) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--primary-foreground) hover:opacity-90 disabled:opacity-50">
+                <button type="button" className="flex-1 cursor-pointer rounded-none border border-(--border) bg-transparent px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) hover:bg-(--muted)" onClick={closeModal}>Cancel</button>
+                <button type="submit" disabled={submitting} className="flex-1 cursor-pointer rounded-none border-0 bg-(--primary) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--primary-foreground) hover:opacity-90 disabled:opacity-50">
                   {submitting ? 'Creating…' : 'Create collection'}
                 </button>
               </div>
