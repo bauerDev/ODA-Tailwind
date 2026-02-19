@@ -86,6 +86,7 @@ Mandatory requirements:
     let parsed: Record<string, unknown> | null = null;
     try {
       parsed = JSON.parse(textToParse) as Record<string, unknown>;
+      console.log(parsed);
     } catch {
       const match = String(textToParse).match(/\{[\s\S]*\}/m);
       if (match) {

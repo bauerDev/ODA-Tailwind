@@ -94,11 +94,11 @@ export default function CollectionDetailPage() {
           <div className="grid grid-cols-1 gap-(--spacing-xl) sm:grid-cols-2 lg:grid-cols-3">
             {artworks.map((artwork) => (
               <Link key={artwork.id} href={`/artwork/${artwork.id}`} className="group block overflow-hidden rounded-none border border-(--border) bg-(--card) transition hover:shadow-md">
-                <div className="aspect-[4/3] overflow-hidden bg-(--muted)">
+                <div className="aspect-4/3 overflow-hidden bg-(--muted)">
                   <img src={artwork.image} alt={artwork.title} className="h-full w-full object-cover transition group-hover:scale-105" />
                 </div>
                 <div className="p-(--spacing-md)">
-                  <h3 className="font-(--font-family-heading) font-medium text-(--foreground)">{artwork.title}</h3>
+                  <h3 className="font-(--font-family-heading) text-(--foreground)">{artwork.title}</h3>
                   <p className="text-sm text-(--muted-foreground)">{artwork.author}</p>
                 </div>
               </Link>
