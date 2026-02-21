@@ -9,9 +9,6 @@ export default function AdminPage() {
                         <a href="/admin/manage-artworks">
                             Manage Artworks
                         </a>
-                        <a href="/upload">
-                            Upload Image
-                        </a>
                         <a href="/admin/manage-users">
                             View Users
                         </a>

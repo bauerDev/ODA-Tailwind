@@ -2,13 +2,22 @@
 
 /**
  * Cloudinary image upload component.
- * Used in /upload (admin-only protected route).
- * Shows drag & drop zone, upload/success/error states and resulting URL to copy.
+ * Used inside the edit/add artwork modal (Manage Artworks).
+ * Shows drag & drop zone, upload/success/error states and resulting URL.
+ * If onUploadComplete is provided, calls it with the URL on success (e.g. to set form.image).
+ * If embedded is true, omits page title and "Back to Admin" link for use inside modals.
  */
 import { useState } from "react";
 import Link from "next/link";
 
-export default function UploadImage() {
+interface UploadImageProps {
+  /** When provided, called with the image URL on successful upload (e.g. to fill form.image) */
+  onUploadComplete?: (url: string) => void;
+  /** When true, compact UI without page title and back link (for use inside modals) */
+  embedded?: boolean;
+}
+
+export default function UploadImage({ onUploadComplete, embedded }: UploadImageProps) {
   const [uploading, setUploading] = useState(false);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +100,7 @@ export default function UploadImage() {
       const data = await res.json();
       if (data.secure_url) {
         setResultUrl(data.secure_url);
+        onUploadComplete?.(data.secure_url);
       } else {
         setError(data.error?.message || "Error uploading image");
       }
@@ -108,22 +118,22 @@ export default function UploadImage() {
   }
 
   return (
-    <div className="w-full max-w-[1280px] mx-auto px-4">
-      {/* Header: page title and description */}
-      <div className="text-center mb-(--spacing-2xl)">
-        <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem] text-(--foreground)">
-          Upload image
-        </h1>
-        <p className="mx-auto max-w-3xl text-lg text-(--muted-foreground)">
-          Upload images to Cloudinary to use as URLs in gallery artworks. Admins only.
-        </p>
-      </div>
+    <div className={embedded ? "w-full" : "w-full max-w-[1280px] mx-auto px-4"}>
+      {!embedded && (
+        <div className="text-center mb-(--spacing-2xl)">
+          <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem] text-(--foreground)">
+            Upload image
+          </h1>
+          <p className="mx-auto max-w-3xl text-lg text-(--muted-foreground)">
+            Upload images to Cloudinary to use as URLs in gallery artworks. Admins only.
+          </p>
+        </div>
+      )}
 
-      {/* Main block: card with upload zone and results */}
-      <div className="mx-auto max-w-2xl">
+      <div className={embedded ? "w-full" : "mx-auto max-w-2xl"}>
         <div className="rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg shadow-black/5 transition-shadow hover:shadow-xl hover:shadow-black/10">
               <h2 className="mb-(--spacing-sm) font-(--font-family-heading) text-2xl text-(--foreground)">
-                Select file
+                {embedded ? "Upload image" : "Select file"}
               </h2>
               <p className="mb-(--spacing-lg) text-(--muted-foreground)">
                 Drag an image here or click to choose
@@ -185,7 +195,7 @@ export default function UploadImage() {
                 </div>
               )}
 
-              {/* After successful upload: show URL to copy and use in Admin when creating/editing artwork */}
+              {/* After successful upload: show URL (and copy hint when not embedded) */}
               {resultUrl && (
                 <div className="mt-(--spacing-lg) rounded-none border border-(--border) bg-(--muted) p-(--spacing-lg) shadow-inner">
                   <p className="mb-2 font-(--font-family-heading) text-sm text-(--foreground)">
@@ -197,21 +207,28 @@ export default function UploadImage() {
                     value={resultUrl}
                     className="w-full rounded-none border border-(--border) bg-(--background) px-3 py-2 text-sm text-(--foreground) focus:outline-none focus:ring-2 focus:ring-(--primary)/20"
                   />
-                  <p className="mt-2 text-xs text-(--muted-foreground)">
-                    Copy this URL and use it in the «Image URL» field when creating or editing an artwork in Admin.
-                  </p>
+                  {embedded ? (
+                    <p className="mt-2 text-xs text-(--muted-foreground)">
+                    The URL has been set in the «Image URL» field below.
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-xs text-(--muted-foreground)">
+                      Copy this URL and use it in the «Image URL» field when creating or editing an artwork in Admin.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {/* Link back to admin panel */}
-              <div className="mt-(--spacing-xl) flex flex-wrap gap-(--spacing-md)">
-                <Link
-                  href="/admin"
-                  className="inline-flex items-center gap-(--spacing-sm) rounded-none border border-(--border) bg-(--background) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) transition-all duration-200 hover:bg-(--muted) hover:border-(--primary)/50"
-                >
-                  ← Back to Admin panel
-                </Link>
-              </div>
+              {!embedded && (
+                <div className="mt-(--spacing-xl) flex flex-wrap gap-(--spacing-md)">
+                  <Link
+                    href="/admin"
+                    className="inline-flex items-center gap-(--spacing-sm) rounded-none border border-(--border) bg-(--background) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) text-(--foreground) transition-all duration-200 hover:bg-(--muted) hover:border-(--primary)/50"
+                  >
+                    ← Back to Admin panel
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
     </div>

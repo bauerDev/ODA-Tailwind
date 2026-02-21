@@ -1,13 +1,13 @@
 /**
  * API /api/artworks
- * GET: Devuelve todas las obras del catálogo ordenadas por id (acceso público).
- * POST: Crea una nueva obra en la tabla artworks (usado desde el panel admin).
+ * GET: Returns all artworks in the catalog ordered by id (public access).
+ * POST: Creates a new artwork in the artworks table (used from admin panel).
  */
 import { NextApiRequest, NextApiResponse } from "next";
 import { pool } from "../../lib/db/db";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // GET: listar todas las obras (galería, filtros, etc.)
+  // GET: list all artworks (gallery, filters, etc.)
   if (req.method === "GET") {
     try {
       const result = await pool.query("SELECT * FROM artworks ORDER BY id");
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // POST: insertar nueva obra; title, author e image son obligatorios
+  // POST: insert new artwork; title, author and image are required
   if (req.method === "POST") {
     const { title, author, year, movement, technique, dimensions, ubication, location, image, description } = req.body || {};
     const loc = ubication ?? location ?? "";

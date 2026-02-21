@@ -1,8 +1,8 @@
 /**
  * API /api/collections
- * GET: Lista las colecciones del usuario logueado (para /my-collection y modal "Add to collection").
- * POST: Crea una nueva colección (name obligatorio; description y visibility opcionales).
- * Requiere sesión en ambos casos.
+ * GET: Lists the logged-in user's collections (for /my-collection and "Add to collection" modal).
+ * POST: Creates a new collection (name required; description and visibility optional).
+ * Requires session in both cases.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";

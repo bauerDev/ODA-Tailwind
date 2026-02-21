@@ -393,7 +393,7 @@ export default function ObraDetalle() {
                     </div>
                   ))
                 ) : charactersResult ? (
-                  <p className="mb-4 text-(--muted-foreground)">No se encontraron personajes en la obra.</p>
+                  <p className="mb-4 text-(--muted-foreground)">No characters found in the artwork.</p>
                 ) : null}
               </>
             )}

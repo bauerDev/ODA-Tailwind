@@ -1,9 +1,9 @@
 /**
  * API POST /api/ai-recognition
- * Recibe una imagen por multipart/form-data (campo "image" o "file"), la redimensiona si supera ~90KB,
- * la envía a OpenAI (modelo con visión) y devuelve un JSON con: is_artwork, title, author, year,
- * movement, technique, dimensions, location, description (~2000 caracteres, párrafos con doble salto),
- * image_url. Si is_artwork es false, el resto son null. Requiere OPENAI_API_KEY.
+ * Receives an image via multipart/form-data (field "image" or "file"), resizes if over ~90KB,
+ * sends it to OpenAI (vision model) and returns JSON: is_artwork, title, author, year,
+ * movement, technique, dimensions, location, description (~2000 chars, paragraphs with double newline),
+ * image_url. If is_artwork is false, the rest are null. Requires OPENAI_API_KEY.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import formidable from 'formidable';
@@ -13,7 +13,7 @@ import OpenAI from 'openai';
 
 export const config = {
   api: {
-    bodyParser: false, // Formidable parsea multipart/form-data
+    bodyParser: false, // Formidable parses multipart/form-data
   },
 };
 
@@ -64,7 +64,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Unsupported image type. Use JPG, PNG, WEBP or GIF.' });
     }
 
-    // Reducir tamaño para no superar límite de contexto de OpenAI (128k tokens)
+    // Reduce size to stay within OpenAI context limit (128k tokens)
     let bufferToSend: Buffer = Buffer.from(buffer);
     const MAX_BYTES_FOR_API = 90 * 1024; // ~90KB keeps us safely under token limit
     if (buffer.length > MAX_BYTES_FOR_API) {
@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const OPENAI_MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
     if (!OPENAI_API_KEY) return res.status(500).json({ error: 'Missing OPENAI_API_KEY' });
 
-    // Prompt: respuesta en inglés, is_artwork, descripción ~2000 caracteres, párrafos con doble newline
+    // Prompt: response in English, is_artwork, description ~2000 chars, paragraphs with double newline
     const systemPrompt = `You are an expert art historian. I will give you an image (base64) and you must return ONLY a valid JSON with exactly these keys: is_artwork, title, author, year, movement, technique, dimensions, location, description, image_url. "is_artwork" must be a boolean: true if the image clearly depicts an artwork (painting, sculpture, drawing, etc.) that can be identified or analyzed; false if the image does NOT depict an artwork (e.g. random photo, person, landscape, meme, screenshot, document, or anything that is not a work of art). When is_artwork is false, set all other fields to null. When is_artwork is true, all values must be in English. Each other key must be a simple text string (no Markdown, no HTML) or null if unknown. The "description" field must be approximately 2000 characters: a detailed analysis of the artwork including subject, composition, technique, historical context, and significance. Format the description with a blank line (double newline) between each paragraph. "image_url" must be a URL if available or null. Do not add any extra text, explanations, or delimiters; respond only with the raw JSON.`;
 
     const dataUrl = `data:${detected};base64,${imageBase64}`;
@@ -131,12 +131,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    // Quitar envoltura ```json ... ``` si la IA la devolvió
+    // Remove ```json ... ``` wrapper if the AI returned it
     let textToParse = String(responseText).trim();
     const codeBlock = textToParse.match(/```(?:json)?\s*([\s\S]*?)```/m);
     if (codeBlock) textToParse = codeBlock[1].trim();
 
-    // Intentar parsear JSON; si falla, extraer el primer {...} del texto
+    // Try to parse JSON; if it fails, extract the first {...} from the text
     let parsed: any = null;
     try {
       parsed = JSON.parse(textToParse);
@@ -155,7 +155,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ raw: responseText });
     }
 
-    // Normalizar valores a string o null para la respuesta
+    // Normalize values to string or null for the response
     const coerceString = (v: any) => {
       if (v === undefined || v === null) return null;
       if (typeof v === 'string') return v.trim() === '' ? null : v;
@@ -186,7 +186,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 
-/** Detecta el tipo MIME por magic bytes del buffer (fallback si formidable no lo envía). */
+/** Detects MIME type by magic bytes of the buffer (fallback if formidable does not send it). */
 function detectMimeType(buf: Buffer) {
   if (buf.length < 4) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8) return 'image/jpeg';

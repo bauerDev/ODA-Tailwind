@@ -1,6 +1,6 @@
 /**
  * API GET /api/admin/collections
- * Lista todas las colecciones de todos los usuarios (con user_id y user_email).
+ * Lists all collections from all users (with user_id and user_email).
  * Solo accesible por admin. Usado en /admin/manage-collections para la tabla y el enlace "View user".
  */
 import type { NextApiRequest, NextApiResponse } from "next";

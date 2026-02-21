@@ -1,20 +1,19 @@
 /**
  * API POST /api/auth/register
- * Registro de nuevos usuarios. Crea una cuenta en la tabla users con email, nombre,
- * contraseña hasheada (bcrypt), tipo de usuario (alumno/docente) e institución opcional.
+ * User registration. Creates an account in the users table with email, name,
+ * hashed password (bcrypt), user type (student/teacher) and optional institution.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { ensureUsersTable, findUserByEmail, createUser } from "../../../lib/db/users";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Solo aceptamos POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { nombre, email, password, confirm_password, tipo_usuario, institucion } = req.body || {};
 
-  // Validaciones: email, contraseña y nombre obligatorios
+  // Validation: email, password and name required
   if (!email || !password || !nombre) {
     return res.status(400).json({ error: "Email, password and full name are required" });
   }
@@ -39,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "An account with this email already exists" });
   }
 
-  // Crear usuario: la contraseña se hashea en createUser (bcrypt)
+  // Create user: password is hashed in createUser (bcrypt)
   try {
     await createUser({
       email: email.trim(),

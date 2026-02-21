@@ -1,7 +1,7 @@
 /**
  * API GET /api/collections/[id]
- * Devuelve una colección y las obras que contiene (solo si el usuario logueado es el dueño).
- * Usado en la página /my-collection/[id] para mostrar la "carpeta" y su listado de obras.
+ * Returns a collection and its artworks (only if the logged-in user is the owner).
+ * Used on /my-collection/[id] to show the collection and its artwork list.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";

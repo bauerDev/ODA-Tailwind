@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import UploadImage from "@/components/UploadImage";
 
-/** Define la estructura de una obra de arte (coincide con la tabla artworks en la BD) */
+/** Artwork structure (matches the artworks table in the DB) */
 interface Artwork {
   id: number;
   title: string;
@@ -17,7 +18,7 @@ interface Artwork {
   description: string;
 }
 
-/** Valores iniciales vacíos para el formulario de alta de obra */
+/** Empty initial values for the add-artwork form */
 const emptyArtwork: Omit<Artwork, "id"> = {
   title: "",
   author: "",
@@ -31,18 +32,13 @@ const emptyArtwork: Omit<Artwork, "id"> = {
 };
 
 export default function ManageArtworks() {
-  // Lista de obras cargadas desde la API
   const [artworks, setArtworks] = useState<Artwork[]>([]);
-  // Indica si está cargando datos (muestra el spinner)
   const [loading, setLoading] = useState(true);
-  // Controla si el modal del formulario está visible
   const [showForm, setShowForm] = useState(false);
-  // ID de la obra que se está editando (null = alta nueva)
   const [editingId, setEditingId] = useState<number | null>(null);
-  // Datos del formulario (alta/edición)
   const [form, setForm] = useState(emptyArtwork);
 
-  /** Obtiene todas las obras desde la API y las guarda en artworks */
+  /** Fetches all artworks from the API */
   const loadArtworks = () => {
     setLoading(true);
     fetch("/api/artworks")
@@ -57,22 +53,20 @@ export default function ManageArtworks() {
       });
   };
 
-  // Al montar el componente, cargamos las obras
   useEffect(() => {
     loadArtworks();
   }, []);
 
-  /** Devuelve ubicación (BD puede usar ubication o location) */
   const getLocation = (a: Artwork) => a.ubication ?? a.location ?? "";
 
-  /** Abre el modal para añadir una obra nueva (formulario vacío) */
+  /** Opens the modal to add a new artwork (empty form) */
   const openAdd = () => {
     setForm(emptyArtwork);
     setEditingId(null);
     setShowForm(true);
   };
 
-  /** Abre el modal para editar una obra existente (precarga sus datos en el formulario) */
+  /** Opens the modal to edit an existing artwork (prefills form) */
   const openEdit = (a: Artwork) => {
     setForm({
       title: a.title,
@@ -89,13 +83,12 @@ export default function ManageArtworks() {
     setShowForm(true);
   };
 
-  /** Cierra el modal del formulario */
   const closeForm = () => {
     setShowForm(false);
     setEditingId(null);
   };
 
-  /** Envía el formulario: POST para nueva obra o PUT para editar; luego recarga la tabla */
+  /** Submits the form: POST for new artwork, PUT for edit; then reloads the list */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...form, ubication: form.ubication ?? "" };
@@ -119,20 +112,20 @@ export default function ManageArtworks() {
       loadArtworks();
     } catch (err) {
       console.error(err);
-      alert("Error al guardar la obra");
+      alert("Error saving artwork");
     }
   };
 
-  /** Elimina una obra por ID; pide confirmación y recarga la tabla tras borrar */
+  /** Deletes an artwork by ID; asks for confirmation and reloads the list */
   const handleDelete = async (id: number) => {
-    if (!confirm("¿Eliminar esta obra?")) return;
+    if (!confirm("Delete this artwork?")) return;
     try {
       const res = await fetch(`/api/artworks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
       loadArtworks();
     } catch (err) {
       console.error(err);
-      alert("Error al eliminar la obra");
+      alert("Error deleting artwork");
     }
   };
 
@@ -147,28 +140,27 @@ export default function ManageArtworks() {
             Add, edit or delete artworks
           </p>
 
-          {/* Botón para abrir el formulario de alta de obra */}
           <div className="mb-(--spacing-lg) flex justify-end">
             <button
               onClick={openAdd}
               className="bg-(--primary) text-(--primary-foreground) px-(--spacing-lg) py-(--spacing-sm) font-(--font-family-heading) transition-opacity hover:opacity-90"
             >
-              + Añadir obra
+              + Add artwork
             </button>
           </div>
 
-          {/* Contenedor de la tabla: muestra spinner si loading, tabla con datos o mensaje vacío */}
+          {/* Table container: spinner when loading, table or empty message */}
           <div className="border border-(--border) overflow-x-auto">
             {loading ? (
-              /* Rueda de carga mientras se obtienen las obras */
+              /* Loading spinner */
               <div className="flex items-center justify-center py-16">
                 <div
                   className="h-10 w-10 animate-spin rounded-full border-4 border-(--muted-foreground) border-t-(--primary)"
-                  aria-label="Cargando"
+                  aria-label="Loading"
                 />
               </div>
             ) : (
-              /* Tabla con todas las columnas de la obra (ID, título, autor, etc.) y acciones */
+              /* Table with artwork columns and actions */
               <table className="w-full min-w-[800px] border-collapse text-(--foreground) bg-white">
                 <thead>
                   <tr className="bg-(--muted) text-(--foreground)">
@@ -230,22 +222,21 @@ export default function ManageArtworks() {
                           <span className="text-(--muted-foreground)">—</span>
                         )}
                       </td>
-                      {/* Botones de acción: Editar (abre formulario) y Eliminar (borra en BD) */}
                       <td className="border-r-0">
                         <div className="flex gap-2">
                           <button
                             onClick={() => openEdit(a)}
                             className="bg-(--primary) text-(--primary-foreground) px-2 py-1 text-sm hover:opacity-90"
-                            title="Editar"
+                            title="Edit"
                           >
-                            Editar
+                            Edit
                           </button>
                           <button
                             onClick={() => handleDelete(a.id)}
                             className="bg-red-600 text-white px-2 py-1 text-sm hover:opacity-90"
-                            title="Eliminar"
+                            title="Delete"
                           >
-                            Eliminar
+                            Delete
                           </button>
                         </div>
                       </td>
@@ -254,17 +245,15 @@ export default function ManageArtworks() {
                 </tbody>
               </table>
             )}
-            {/* Mensaje cuando no hay obras en la base de datos */}
             {!loading && artworks.length === 0 && (
               <p className="py-8 text-center text-(--muted-foreground)">
-                No hay obras. Añade una con el botón «Añadir obra».
+                No artworks. Add one with the «Add artwork» button.
               </p>
             )}
           </div>
         </div>
       </section>
 
-      {/* Modal del formulario: overlay oscuro + formulario; clic fuera cierra */}
       {showForm && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
@@ -275,12 +264,11 @@ export default function ManageArtworks() {
             onClick={(e) => e.stopPropagation()}
           >
             <h2 className="text-2xl font-(--font-family-heading) mb-(--spacing-lg)">
-              {editingId ? "Editar obra" : "Añadir obra"}
+              {editingId ? "Edit artwork" : "Add artwork"}
             </h2>
-            {/* Formulario reutilizado para alta y edición; handleSubmit decide POST o PUT */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm mb-1">Título *</label>
+                <label className="block text-sm mb-1">Title *</label>
                 <input
                   type="text"
                   value={form.title}
@@ -290,7 +278,7 @@ export default function ManageArtworks() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Autor *</label>
+                <label className="block text-sm mb-1">Author *</label>
                 <input
                   type="text"
                   value={form.author}
@@ -301,7 +289,7 @@ export default function ManageArtworks() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1">Año</label>
+                  <label className="block text-sm mb-1">Year</label>
                   <input
                     type="text"
                     value={form.year}
@@ -310,7 +298,7 @@ export default function ManageArtworks() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Movimiento</label>
+                  <label className="block text-sm mb-1">Movement</label>
                   <input
                     type="text"
                     value={form.movement}
@@ -321,7 +309,7 @@ export default function ManageArtworks() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1">Técnica</label>
+                  <label className="block text-sm mb-1">Technique</label>
                   <input
                     type="text"
                     value={form.technique}
@@ -330,7 +318,7 @@ export default function ManageArtworks() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Dimensiones</label>
+                  <label className="block text-sm mb-1">Dimensions</label>
                   <input
                     type="text"
                     value={form.dimensions}
@@ -340,7 +328,7 @@ export default function ManageArtworks() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm mb-1">Ubicación</label>
+                <label className="block text-sm mb-1">Location</label>
                 <input
                   type="text"
                   value={form.ubication}
@@ -349,7 +337,14 @@ export default function ManageArtworks() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">URL de imagen *</label>
+                <label className="block text-sm mb-1">Upload image</label>
+                <UploadImage
+                  embedded
+                  onUploadComplete={(url) => setForm((f) => ({ ...f, image: url }))}
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Image URL *</label>
                 <input
                   type="url"
                   value={form.image}
@@ -359,7 +354,7 @@ export default function ManageArtworks() {
                 />
               </div>
               <div>
-                <label className="block text-sm mb-1">Descripción</label>
+                <label className="block text-sm mb-1">Description</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
@@ -372,14 +367,14 @@ export default function ManageArtworks() {
                   type="submit"
                   className="bg-(--primary) text-(--primary-foreground) px-(--spacing-lg) py-(--spacing-sm) hover:opacity-90"
                 >
-                  {editingId ? "Guardar cambios" : "Añadir obra"}
+                  {editingId ? "Save changes" : "Add artwork"}
                 </button>
                 <button
                   type="button"
                   onClick={closeForm}
                   className="border border-(--border) px-(--spacing-lg) py-(--spacing-sm) hover:bg-(--muted)"
                 >
-                  Cancelar
+                  Cancel
                 </button>
               </div>
             </form>

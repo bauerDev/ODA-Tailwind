@@ -1,7 +1,7 @@
 /**
  * API GET /api/admin/users
- * Lista todos los usuarios de la base de datos (id, email, name, user_type, institution, is_admin).
- * Solo accesible por usuarios con isAdmin. Usado en /admin/manage-users.
+ * Lists all users in the database (id, email, name, user_type, institution, is_admin).
+ * Only accessible to users with isAdmin. Used in /admin/manage-users.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
