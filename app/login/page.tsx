@@ -9,7 +9,12 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
-  const [error, setError] = useState("");
+  const errorParam = searchParams?.get("error") ?? "";
+  const [error, setError] = useState(
+    errorParam === "OAuthSignin" || errorParam === "OAuthCallback" || errorParam === "OAuthCreateAccount"
+      ? "Google sign-in failed. Check that GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in .env.local and that the redirect URI http://localhost:3000/api/auth/callback/google is added in Google Cloud Console."
+      : ""
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

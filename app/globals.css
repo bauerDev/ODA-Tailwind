@@ -1,2 +1,21 @@
 @import "tailwindcss";
 
+/* Choices.js: selected pills use project primary color */
+.choices__list--multiple .choices__item {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: var(--primary-foreground) !important;
+}
+.choices__list--multiple .choices__item.is-highlighted {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  filter: brightness(0.9);
+}
+.choices[data-type*=select-multiple] .choices__button,
+.choices[data-type*=text] .choices__button {
+  border-left-color: rgba(255, 255, 255, 0.5);
+}
+.choices[data-type*=select-multiple] .choices__button:hover,
+.choices[data-type*=select-multiple] .choices__button:focus {
+  opacity: 1;
+}
