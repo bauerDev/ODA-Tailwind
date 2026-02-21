@@ -1,8 +1,8 @@
 /**
  * API /api/artworks/[id]
- * GET: Devuelve una sola obra por id (página de detalle /artwork/[id]).
- * PUT/PATCH: Actualiza la obra; solo se modifican los campos enviados en el body (COALESCE).
- * DELETE: Elimina la obra de la base de datos (usado desde manage-artworks).
+ * GET: Returns a single artwork by id (detail page /artwork/[id]).
+ * PUT/PATCH: Updates the artwork; only fields sent in the body are modified (COALESCE).
+ * DELETE: Deletes the artwork from the database (used from manage-artworks).
  */
 import { NextApiRequest, NextApiResponse } from "next";
 import { pool } from "../../../lib/db/db";
@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "Invalid ID" });
   }
 
-  // GET: obtener una obra por id (público)
+  // GET: fetch artwork by id (public)
   if (req.method === "GET") {
     try {
       const result = await pool.query("SELECT * FROM artworks WHERE id = $1", [id]);
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // PUT/PATCH: actualizar obra; COALESCE mantiene el valor anterior si no se envía el nuevo
+  // PUT/PATCH: update artwork; COALESCE keeps previous value if new one not sent
   if (req.method === "PUT" || req.method === "PATCH") {
     const { title, author, year, movement, technique, dimensions, ubication, location, image, description } = req.body || {};
     const loc = ubication ?? location ?? "";
@@ -60,7 +60,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  // DELETE: borrar obra por id (referencias en collection_artworks pueden quedar huérfanas)
+  // DELETE: delete artwork by id (references in collection_artworks may be orphaned)
   if (req.method === "DELETE") {
     try {
       const result = await pool.query("DELETE FROM artworks WHERE id = $1 RETURNING id", [id]);

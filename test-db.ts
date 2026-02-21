@@ -17,9 +17,9 @@ const pool = new Pool({
 async function test() {
   try {
     const res = await pool.query('SELECT NOW()');
-    console.log('DB conectada:', res.rows[0]);
+    console.log('DB connected:', res.rows[0]);
   } catch (err) {
-    console.error('Error de conexión:', err);
+    console.error('Connection error:', err);
   } finally {
     await pool.end();
   }

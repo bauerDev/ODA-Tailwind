@@ -22,8 +22,12 @@ export default function Header() {
           <Link href="/" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Home</Link>
           <Link href="/gallery" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Gallery</Link>
           <Link href="/ai-recognition" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>AI / Recognition</Link>
-          <Link href="/my-collection" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>My Collection</Link>
-          <Link href="/contact" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Contact</Link>
+          {!session?.user?.isAdmin && (
+            <>
+              <Link href="/my-collection" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>My Collection</Link>
+              <Link href="/contact" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Contact</Link>
+            </>
+          )}
           {session?.user?.isAdmin && (
             <Link href="/admin" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Admin</Link>
           )}
@@ -118,13 +122,15 @@ export default function Header() {
               <div className="py-1">
                 {session?.user ? (
                   <>
-                    <Link
-                      href="/my-collection"
-                      className="block cursor-pointer px-4 py-2 text-sm transition-colors duration-200 hover:bg-(--muted)"
-                      style={{ color: "var(--foreground)" }}
-                    >
-                      My Collection
-                    </Link>
+                    {!session.user.isAdmin && (
+                      <Link
+                        href="/my-collection"
+                        className="block cursor-pointer px-4 py-2 text-sm transition-colors duration-200 hover:bg-(--muted)"
+                        style={{ color: "var(--foreground)" }}
+                      >
+                        My Collection
+                      </Link>
+                    )}
                     {session.user.isAdmin && (
                       <Link
                         href="/admin"
@@ -161,13 +167,15 @@ export default function Header() {
                     </Link>
                   </>
                 )}
-                <Link
-                  href="/contact"
-                  className="block cursor-pointer px-4 py-2 text-sm no-underline transition-colors duration-200 hover:bg-(--muted)"
-                  style={{ color: "var(--foreground)" }}
-                >
-                  Help
-                </Link>
+                {!session?.user?.isAdmin && (
+                  <Link
+                    href="/contact"
+                    className="block cursor-pointer px-4 py-2 text-sm no-underline transition-colors duration-200 hover:bg-(--muted)"
+                    style={{ color: "var(--foreground)" }}
+                  >
+                    Help
+                  </Link>
+                )}
               </div>
             </div>
           </div>

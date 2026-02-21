@@ -5,11 +5,11 @@ export default function Ayuda() {
             <div className="mx-auto w-full max-w-[1280px] px-4">
                 <div className="text-center">
                     <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem]">
-                        {/* TODO: Agregar lógica condicional para mostrar "Contact" o "Help Center" según request.endpoint */}
+                        {/* TODO: Add conditional logic to show "Contact" or "Help Center" based on request.endpoint */}
                         Help Center
                     </h1>
                     <p className="mx-auto max-w-3xl text-lg text-(--muted-foreground)">
-                        {/* TODO: Agregar lógica condicional para mostrar diferentes textos según request.endpoint */}
+                        {/* TODO: Add conditional logic to show different text based on request.endpoint */}
                         Need help? We&apos;re here to assist you. Send us your inquiry and we&apos;ll respond as soon as possible.
                     </p>
                 </div>

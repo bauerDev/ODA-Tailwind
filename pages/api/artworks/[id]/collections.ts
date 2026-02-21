@@ -1,8 +1,8 @@
 /**
  * API GET /api/artworks/[id]/collections
- * Devuelve las colecciones del usuario logueado que contienen esta obra (id = artwork id).
- * Se usa en /artwork/[id] para mostrar las pills "In your collections" y el botón de quitar.
- * Si no hay sesión, devuelve [].
+ * Returns the logged-in user's collections that contain this artwork (id = artwork id).
+ * Used on /artwork/[id] to show "In your collections" pills and the remove button.
+ * If there is no session, returns [].
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";

@@ -2,7 +2,7 @@
  * API DELETE /api/admin/users/[id]
  * Elimina un usuario de la base de datos. Primero borra sus colecciones (user_collections)
  * y por cascada las entradas en collection_artworks; luego borra el usuario.
- * Solo accesible por admin. Usado desde el botón "Delete" en /admin/manage-users.
+ * Only accessible to admin. Used from the "Delete" button on /admin/manage-users.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";

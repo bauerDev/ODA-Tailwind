@@ -1,9 +1,9 @@
 /**
  * API POST /api/artworks/[id]/analyze-characters
- * Analiza los personajes de una obra mediante IA (OpenAI visión).
- * Obtiene la obra de la BD (título, autor, imagen) y envía la URL de la imagen a OpenAI
- * con un prompt específico. Devuelve JSON: { obra, personajes }.
- * No afecta a /api/ai-recognition.
+ * Analyzes characters in an artwork using AI (OpenAI vision).
+ * Fetches the artwork from the DB (title, author, image) and sends the image URL to OpenAI
+ * with a specific prompt. Returns JSON: { obra, personajes }.
+ * Does not affect /api/ai-recognition.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
 import { pool } from "../../../../lib/db/db";

@@ -9,13 +9,13 @@ export default function GaleriaPage() {
   const [panelOpen, setPanelOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Selección en el panel (pendiente de aplicar)
+  // Selection in the panel (pending apply)
   const [pendingAuthor, setPendingAuthor] = useState<Set<string>>(new Set());
   const [pendingYear, setPendingYear] = useState<Set<string>>(new Set());
   const [pendingMovement, setPendingMovement] = useState<Set<string>>(new Set());
   const [pendingTechnique, setPendingTechnique] = useState<Set<string>>(new Set());
 
-  // Filtros ya aplicados (los que se usan para filtrar la lista)
+  // Applied filters (used to filter the list)
   const [appliedAuthor, setAppliedAuthor] = useState<Set<string>>(new Set());
   const [appliedYear, setAppliedYear] = useState<Set<string>>(new Set());
   const [appliedMovement, setAppliedMovement] = useState<Set<string>>(new Set());
