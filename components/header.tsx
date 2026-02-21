@@ -22,13 +22,17 @@ export default function Header() {
           <Link href="/" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Home</Link>
           <Link href="/gallery" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Gallery</Link>
           <Link href="/ai-recognition" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>AI / Recognition</Link>
-          {!session?.user?.isAdmin && (
+          {status === "loading" ? (
+            <>
+              <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>My Collection</span>
+              <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>Contact</span>
+            </>
+          ) : !session?.user?.isAdmin ? (
             <>
               <Link href="/my-collection" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>My Collection</Link>
               <Link href="/contact" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Contact</Link>
             </>
-          )}
-          {session?.user?.isAdmin && (
+          ) : (
             <Link href="/admin" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Admin</Link>
           )}
         </nav>

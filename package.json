@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
+    "choices.js": "^11.1.0",
     "dotenv": "^17.2.4",
     "formidable": "^3.5.4",
     "next": "^16.1.6",
