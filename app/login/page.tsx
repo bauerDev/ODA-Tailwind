@@ -1,18 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function LoginPage() {
+const OAUTH_ERROR_MSG =
+  "Google sign-in failed. Check that GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set and that the redirect URI is added in Google Cloud Console.";
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/";
   const errorParam = searchParams?.get("error") ?? "";
   const [error, setError] = useState(
     errorParam === "OAuthSignin" || errorParam === "OAuthCallback" || errorParam === "OAuthCreateAccount"
-      ? "Google sign-in failed. Check that GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set in .env.local and that the redirect URI http://localhost:3000/api/auth/callback/google is added in Google Cloud Console."
+      ? OAUTH_ERROR_MSG
       : ""
   );
   const [loading, setLoading] = useState(false);
@@ -148,5 +151,19 @@ export default function LoginPage() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <section className="flex min-h-[calc(100vh-7rem)] items-center justify-center py-(--spacing-3xl)">
+          <p className="text-(--muted-foreground)">Loading…</p>
+        </section>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }
