@@ -54,7 +54,7 @@ export default function CollectionDetailPage() {
 
   if (!session) {
     return (
-      <div className="mx-auto max-w-[1280px] px-4 py-8 text-center">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-center">
         <p className="text-(--muted-foreground)">Sign in to view this collection.</p>
         <Link href="/login" className="mt-4 inline-block text-(--primary)">Sign in</Link>
       </div>
@@ -63,7 +63,7 @@ export default function CollectionDetailPage() {
 
   if (error || !data) {
     return (
-      <div className="mx-auto max-w-[1280px] px-4 py-8 text-center">
+      <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 py-6 sm:py-8 text-center">
         <p className="text-(--muted-foreground)">{error || 'Collection not found'}</p>
         <Link href="/my-collection" className="mt-4 inline-block text-(--primary)">← Back to My Collection</Link>
       </div>
@@ -79,7 +79,7 @@ export default function CollectionDetailPage() {
           ← Back to My Collection
         </Link>
       </div>
-      <section className="mx-auto w-full max-w-[1280px] px-4 pb-(--spacing-4xl)">
+      <section className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 pb-(--spacing-3xl) sm:pb-(--spacing-4xl)">
         <h1 className="mb-2 font-(--font-family-heading) text-3xl text-(--foreground)">{collection.name}</h1>
         {collection.description && (
           <p className="mb-(--spacing-xl) text-(--muted-foreground)">{collection.description}</p>

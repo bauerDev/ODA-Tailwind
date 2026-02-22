@@ -88,7 +88,7 @@ export default function ArtworkPreview() {
         </a>
       </div>
 
-      <section className="mx-auto w-full max-w-[1280px] px-4 pb-(--spacing-4xl)">
+      <section className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 pb-(--spacing-3xl) sm:pb-(--spacing-4xl)">
         <div className="grid grid-cols-1 gap-(--spacing-2xl) lg:grid-cols-2 lg:items-start">
           {/* Image - same as /artwork/[id] */}
           <button

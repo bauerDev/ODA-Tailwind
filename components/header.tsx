@@ -1,45 +1,93 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { useUserMenu } from "../hooks/useUserMenu";
 
 export default function Header() {
   const { data: session, status } = useSession();
   const { isMenuOpen, menuRef, toggleMenu } = useUserMenu();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // Cerrar menú móvil al cambiar de ruta o al redimensionar a desktop
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth >= 1024) setIsMobileMenuOpen(false);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const closeMobileMenu = () => setIsMobileMenuOpen(false);
+
+  const navLinks = (
+    <>
+      <Link href="/" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>Home</Link>
+      <Link href="/gallery" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>Gallery</Link>
+      <Link href="/ai-recognition" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>AI / Recognition</Link>
+      {status === "loading" ? (
+        <>
+          <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>My Collection</span>
+          <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>Contact</span>
+        </>
+      ) : !session?.user?.isAdmin ? (
+        <>
+          <Link href="/my-collection" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>My Collection</Link>
+          <Link href="/contact" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>Contact</Link>
+        </>
+      ) : (
+        <Link href="/admin" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }} onClick={closeMobileMenu}>Admin</Link>
+      )}
+    </>
+  );
 
   return (
-    <header style={{ backgroundColor: "var(--primary)" }}>
-      <div className="container mx-auto flex h-20 items-center justify-between">
-        <Link href="/" className="shrink-0">
-          <h1 className="text-2xl leading-tight" style={{ fontFamily: "var(--font-family-heading)", color: "var(--primary-foreground)" }}>
+    <header style={{ backgroundColor: "var(--primary)" }} className="relative">
+      <div className="container mx-auto flex h-16 min-h-16 items-center justify-between">
+        <Link href="/" className="shrink-0" onClick={closeMobileMenu}>
+          <h1 className="text-xl leading-tight sm:text-2xl" style={{ fontFamily: "var(--font-family-heading)", color: "var(--primary-foreground)" }}>
             Oracle<br />
-            <span className="text-xl" style={{ fontFamily: "var(--font-family-heading)", color: "var(--primary-foreground)" }}>of Art</span>
+            <span className="text-lg sm:text-xl" style={{ fontFamily: "var(--font-family-heading)", color: "var(--primary-foreground)" }}>of Art</span>
           </h1>
         </Link>
 
-        <nav className="flex items-center gap-10">
-          <Link href="/" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Home</Link>
-          <Link href="/gallery" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Gallery</Link>
-          <Link href="/ai-recognition" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>AI / Recognition</Link>
-          {status === "loading" ? (
-            <>
-              <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>My Collection</span>
-              <span className="invisible select-none" aria-hidden="true" style={{ fontFamily: "var(--font-family-heading)" }}>Contact</span>
-            </>
-          ) : !session?.user?.isAdmin ? (
-            <>
-              <Link href="/my-collection" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>My Collection</Link>
-              <Link href="/contact" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Contact</Link>
-            </>
-          ) : (
-            <Link href="/admin" className="opacity-80 transition-opacity duration-200 hover:opacity-100" style={{ color: "var(--primary-foreground)" }}>Admin</Link>
-          )}
+        {/* Navegación desktop: visible solo en lg+ */}
+        <nav className="hidden items-center gap-6 lg:flex xl:gap-10">
+          {navLinks}
         </nav>
 
-        <div className="flex items-center gap-4">
+        {/* Botón hamburguesa: solo móvil/tablet */}
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen((o) => !o)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center border-none bg-transparent p-0 opacity-90 transition-opacity hover:opacity-100 lg:hidden"
+          aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
+          style={{ color: "var(--primary-foreground)" }}
+        >
+          {isMobileMenuOpen ? (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          )}
+        </button>
+
+        <div className="flex items-center gap-2 sm:gap-4">
           <button
-            className="flex cursor-pointer items-center border-none bg-transparent p-0 opacity-80 transition-opacity duration-200 hover:opacity-100"
+            className="hidden cursor-pointer items-center border-none bg-transparent p-0 opacity-80 transition-opacity duration-200 hover:opacity-100 sm:flex"
             aria-label="Search"
             style={{ color: "var(--primary-foreground)" }}
           >
@@ -184,6 +232,28 @@ export default function Header() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Menú móvil: panel desplegable */}
+      <div
+        className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out lg:hidden ${isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"}`}
+        style={{ backgroundColor: "var(--primary)" }}
+        aria-hidden={!isMobileMenuOpen}
+      >
+        <nav className="flex flex-col gap-0 border-t border-[rgba(245,245,245,0.2)] px-4 py-4">
+          <Link href="/" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>Home</Link>
+          <Link href="/gallery" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>Gallery</Link>
+          <Link href="/ai-recognition" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>AI / Recognition</Link>
+          {!session?.user?.isAdmin && (
+            <>
+              <Link href="/my-collection" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>My Collection</Link>
+              <Link href="/contact" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>Contact</Link>
+            </>
+          )}
+          {session?.user?.isAdmin && (
+            <Link href="/admin" className="py-3 text-(--primary-foreground) opacity-90 hover:opacity-100" onClick={closeMobileMenu}>Admin</Link>
+          )}
+        </nav>
       </div>
     </header>
   );

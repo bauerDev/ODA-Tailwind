@@ -57,7 +57,7 @@ function LoginForm() {
   return (
     <>
       <section className="flex min-h-[calc(100vh-7rem)] items-center py-(--spacing-3xl)">
-        <div className="mx-auto w-full max-w-[1280px] px-4">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="mx-auto w-full max-w-md">
             <div className="mb-(--spacing-2xl) text-center">
               <h1 className="mb-(--spacing-sm) font-(--font-family-heading) text-4xl">Sign In</h1>

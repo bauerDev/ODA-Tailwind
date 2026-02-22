@@ -240,7 +240,7 @@ export default function GaleriaPage() {
     <>
       {/* Page title and description (same size as rest of site) */}
       <section className="border-b border-(--border) bg-white py-(--spacing-2xl)">
-        <div className="mx-auto w-full max-w-[1280px] px-4 text-center">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem]">
             Gallery
           </h1>
@@ -252,7 +252,7 @@ export default function GaleriaPage() {
 
       {/* Apply filters / Clear filters and filter panel */}
       <section className="bg-white py-(--spacing-lg)">
-        <div className="mx-auto w-full max-w-[1280px] px-4">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-4">
             <button
               type="button"
@@ -420,8 +420,8 @@ export default function GaleriaPage() {
         </div>
       </section>
 
-      <section className="py-(--spacing-2xl)">
-        <div className="mx-auto w-full max-w-[1280px] px-4">
+      <section className="py-(--spacing-xl) sm:py-(--spacing-2xl)">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-(--spacing-xl) sm:grid-cols-2 lg:grid-cols-3">
             {filteredArtworks.map((artwork) => (
               <a key={artwork.id} href={`/artwork/${artwork.id}`} className="block group">

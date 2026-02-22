@@ -2,14 +2,14 @@
 export default function Home() {
   return (
       <>
-      <section className="relative bg-(--primary) pt-(--spacing-5xl) pb-(--spacing-5xl)">
-          <div className="w-full max-w-[1280px] mx-auto">
+      <section className="relative bg-(--primary) pt-(--spacing-3xl) pb-(--spacing-3xl) sm:pt-(--spacing-4xl) sm:pb-(--spacing-4xl) md:pt-(--spacing-5xl) md:pb-(--spacing-5xl)">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
-                  <h1 className="font-(--font-family-heading) text-4xl mb-(--spacing-lg)" style={{ color: 'var(--primary-foreground)' }}>
+                  <h1 className="font-(--font-family-heading) text-2xl sm:text-3xl md:text-4xl mb-(--spacing-lg)" style={{ color: 'var(--primary-foreground)' }}>
                       Welcome to<br />
                       <span className="italic">Oracle of Art</span>
                   </h1>
-                  <p className="text-lg max-w-2xl mt-0 mx-auto mb-(--spacing-4xl)" style={{ color: '#f5f5f5e6' }}>
+                  <p className="text-base sm:text-lg max-w-2xl mt-0 mx-auto mb-(--spacing-3xl) sm:mb-(--spacing-4xl)" style={{ color: '#f5f5f5e6' }}>
                       Your educational portal to explore art history. 
                       Discover masterpieces, learn about artistic movements 
                       and immerse yourself in centuries of human creativity.
@@ -27,13 +27,13 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="pt-(--spacing-4xl) pb-(--spacing-4xl)">
-          <div className="w-full max-w-[1280px] mx-auto">
-              <h2 className="font-(--font-family-heading) text-3xl text-center mb-(--spacing-3xl)">
+      <section className="pt-(--spacing-3xl) pb-(--spacing-3xl) sm:pt-(--spacing-4xl) sm:pb-(--spacing-4xl)">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
+              <h2 className="font-(--font-family-heading) text-2xl sm:text-3xl text-center mb-(--spacing-2xl) sm:mb-(--spacing-3xl)">
                   Explore our tools
               </h2>
 
-              <div className="grid grid-cols-1 gap-(--spacing-xl) md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid grid-cols-1 gap-(--spacing-lg) sm:gap-(--spacing-xl) md:grid-cols-2 lg:grid-cols-3">
                   <a href="/gallery" className="bg-(--card) border border-[#afafaf80] relative no-underline text-inherit block overflow-hidden rounded-none transition-shadow duration-(--transition-normal) hover:shadow-[0px_8px_30px_#0000001f] group">
                       <div className="relative w-full pb-[75%] overflow-hidden bg-(--muted)">
                           <img
@@ -42,8 +42,8 @@ export default function Home() {
                               className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
                           />
                       </div>
-                      <div className="p-(--spacing-lg)">
-                          <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
+                      <div className="p-(--spacing-md) sm:p-(--spacing-lg)">
+                          <h3 className="font-(--font-family-heading) text-xl sm:text-2xl mb-(--spacing-md)">
                               Gallery
                           </h3>
                           <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
@@ -63,8 +63,8 @@ export default function Home() {
                               className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
                           />
                       </div>
-                      <div className="p-(--spacing-lg)">
-                          <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
+                      <div className="p-(--spacing-md) sm:p-(--spacing-lg)">
+                          <h3 className="font-(--font-family-heading) text-xl sm:text-2xl mb-(--spacing-md)">
                               AI Recognition
                           </h3>
                           <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
@@ -84,8 +84,8 @@ export default function Home() {
                               className="absolute top-0 left-0 w-full h-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
                           />
                       </div>
-                      <div className="p-(--spacing-lg)">
-                          <h3 className="font-(--font-family-heading) text-2xl mb-(--spacing-md)">
+                      <div className="p-(--spacing-md) sm:p-(--spacing-lg)">
+                          <h3 className="font-(--font-family-heading) text-xl sm:text-2xl mb-(--spacing-md)">
                               My Collection
                           </h3>
                           <p className="mb-(--spacing-lg)" style={{color: 'var(--muted-foreground)'}}>
@@ -101,10 +101,10 @@ export default function Home() {
       </section>
 
       {/* About Section */}
-      <section className="pt-(--spacing-4xl) pb-(--spacing-4xl) bg-(--card)">
-          <div className="w-full max-w-[1280px] mx-auto">
+      <section className="pt-(--spacing-3xl) pb-(--spacing-3xl) sm:pt-(--spacing-4xl) sm:pb-(--spacing-4xl) bg-(--card)">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
               <div className="max-w-3xl my-0 mx-auto text-center">
-                  <h2 className="font-(--font-family-heading) text-3xl mb-(--spacing-xl)">
+                  <h2 className="font-(--font-family-heading) text-2xl sm:text-3xl mb-(--spacing-lg) sm:mb-(--spacing-xl)">
                       About Oracle of Art
                   </h2>
                   <p className="text-lg leading-relaxed mb-(--spacing-lg)" style={{color:'var(--muted-foreground)'}}>
@@ -123,13 +123,13 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="pt-(--spacing-4xl) pb-(--spacing-4xl)">
-          <div className="w-full max-w-[1280px] mx-auto">
+      <section className="pt-(--spacing-3xl) pb-(--spacing-3xl) sm:pt-(--spacing-4xl) sm:pb-(--spacing-4xl)">
+          <div className="w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
               <div className="text-center">
-                  <h2 className="font-(--font-family-heading) text-3xl mb-(--spacing-lg)">
+                  <h2 className="font-(--font-family-heading) text-2xl sm:text-3xl mb-(--spacing-lg)">
                       Ready to explore?
                   </h2>
-                  <p className="text-lg mb-(--spacing-xl)" style={{color: 'var(--muted-foreground)'}}>
+                  <p className="text-base sm:text-lg mb-(--spacing-xl)" style={{color: 'var(--muted-foreground)'}}>
                       Sign up for free and access all platform features.
                   </p>
                   <a href="/register" className="inline-block font-(--font-family-heading) py-(--spacing-md) px-(--spacing-4xl) bg-(--primary) no-underline transition-all duration-(--transition-fast) hover:opacity-90" style={{color:'var(--primary-foreground)'}}>
