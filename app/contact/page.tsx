@@ -2,7 +2,7 @@ export default function Ayuda() {
     return (
         <>
         <section className="bg-(--card) py-(--spacing-2xl)">
-            <div className="mx-auto w-full max-w-[1280px] px-4">
+            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
                 <div className="text-center">
                     <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem]">
                         {/* TODO: Add conditional logic to show "Contact" or "Help Center" based on request.endpoint */}
@@ -17,8 +17,8 @@ export default function Ayuda() {
         </section>
 
         {/* Main Content */}
-        <section className="py-(--spacing-3xl)">
-            <div className="mx-auto w-full max-w-[1280px] px-4">
+        <section className="py-(--spacing-2xl) sm:py-(--spacing-3xl)">
+            <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 gap-(--spacing-2xl) lg:grid-cols-2">
                     {/* Contact Form */}
                     <div className="order-1 lg:order-0">

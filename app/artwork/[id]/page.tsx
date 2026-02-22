@@ -146,14 +146,14 @@ export default function ObraDetalle() {
   return (
     <>
       {/* Back */}
-      <div className="p-(--spacing-lg)">
-        <a href="/gallery" className="inline-flex items-center gap-(--spacing-sm)">
+      <div className="px-4 sm:px-6 pt-(--spacing-md) sm:pt-(--spacing-lg)">
+        <a href="/gallery" className="inline-flex items-center gap-(--spacing-sm) text-(--foreground)">
           ← Back to gallery
         </a>
       </div>
 
-      <section className="mx-auto w-full max-w-[1280px] px-4 pb-(--spacing-4xl)">
-        <div className="grid grid-cols-1 gap-(--spacing-2xl) lg:grid-cols-2 lg:items-start">
+      <section className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 pb-(--spacing-3xl) sm:pb-(--spacing-4xl)">
+        <div className="grid grid-cols-1 gap-(--spacing-xl) sm:gap-(--spacing-2xl) lg:grid-cols-2 lg:items-start">
 
           {/* IMAGE - click opens lightbox. Fixed height, does not stretch */}
           <button
@@ -174,11 +174,11 @@ export default function ObraDetalle() {
               {obra.technique}
             </span>
 
-            <h1 className="mt-4 text-4xl italic">
+            <h1 className="mt-4 text-2xl sm:text-3xl md:text-4xl italic font-(--font-family-heading)">
               {obra.title}
             </h1>
 
-            <div className="mt-6 space-y-2 text-lg">
+            <div className="mt-4 sm:mt-6 space-y-2 text-base sm:text-lg">
               <p><b>Author:</b> {obra.author}</p>
               <p><b>Year:</b> {obra.year}</p>
               <p><b>Movement:</b> {obra.movement}</p>

@@ -110,7 +110,7 @@ export default function Reconocimiento() {
     return (
         <>
             <section className="bg-(--card) py-(--spacing-2xl)">
-                <div className="mx-auto w-full max-w-[1280px] px-4">
+                <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
                         <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem]">
                             Artificial Intelligence Recognition
@@ -124,8 +124,8 @@ export default function Reconocimiento() {
                 </div>
             </section>
 
-            <section className="py-(--spacing-3xl)">
-                <div className="mx-auto w-full max-w-[1280px] px-4">
+            <section className="py-(--spacing-2xl) sm:py-(--spacing-3xl)">
+                <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
                     <div className="w-full">
                         <div className="border border-(--border) bg-(--card) p-(--spacing-xl)">
                             <h2 className="mb-(--spacing-sm) font-(--font-family-heading) text-2xl">Upload an image</h2>

@@ -89,7 +89,7 @@ export default function MiColeccion() {
   if (!session) {
     return (
       <section className="py-(--spacing-3xl)">
-        <div className="mx-auto max-w-[1280px] px-4 text-center">
+        <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl">My Collection</h1>
           <p className="text-(--muted-foreground)">Sign in to create and manage your collections.</p>
           <Link href="/login" className="mt-4 inline-block bg-(--primary) px-4 py-2 text-(--primary-foreground)">
@@ -103,7 +103,7 @@ export default function MiColeccion() {
   return (
     <>
       <section className="bg-(--card) py-(--spacing-2xl)">
-        <div className="mx-auto w-full max-w-[1280px] px-4">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="mb-(--spacing-lg) font-(--font-family-heading) text-4xl md:text-[3rem]">My Collection</h1>
             <p className="mx-auto max-w-3xl text-lg text-(--muted-foreground)">
@@ -114,8 +114,8 @@ export default function MiColeccion() {
         </div>
       </section>
 
-      <section className="py-(--spacing-3xl)">
-        <div className="mx-auto w-full max-w-[1280px] px-4">
+      <section className="py-(--spacing-2xl) sm:py-(--spacing-3xl)">
+        <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="mb-(--spacing-3xl) rounded-none border-2 border-dashed border-(--border) bg-(--card) p-(--spacing-3xl) text-center transition-all duration-200 hover:border-(--primary) hover:bg-[rgba(102,20,20,0.02)]">
             <div className="mx-auto max-w-lg">
               <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mx-auto mb-(--spacing-lg) h-12 w-12 text-(--primary)">
@@ -173,7 +173,7 @@ export default function MiColeccion() {
 
       {isModalOpen && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/50 p-(--spacing-lg)" onClick={closeModal}>
-          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-none bg-(--card) shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-[95vw] sm:max-w-lg overflow-y-auto rounded-none bg-(--card) shadow-lg mx-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-(--border) p-(--spacing-xl)">
               <h2 className="font-(--font-family-heading) text-2xl">Create new collection</h2>
               <button type="button" className="flex cursor-pointer items-center justify-center border-0 bg-transparent p-(--spacing-xs) text-(--muted-foreground) hover:text-(--foreground)" onClick={closeModal} aria-label="Close">

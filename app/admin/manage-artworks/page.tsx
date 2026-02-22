@@ -131,12 +131,12 @@ export default function ManageArtworks() {
 
   return (
     <>
-      <section className="flex-1 flex flex-col items-center px-4 py-8">
+      <section className="flex-1 flex flex-col items-center px-4 sm:px-6 py-6 sm:py-8">
         <div className="w-full max-w-[1280px] mx-auto">
-          <h1 className="text-4xl font-(--font-family-heading) text-(--foreground) mb-(--spacing-xl) text-center">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-(--font-family-heading) text-(--foreground) mb-(--spacing-lg) sm:mb-(--spacing-xl) text-center">
             Manage Artworks
           </h1>
-          <p className="text-lg text-(--muted-foreground) mb-(--spacing-xl) text-center">
+          <p className="text-base sm:text-lg text-(--muted-foreground) mb-(--spacing-xl) text-center">
             Add, edit or delete artworks
           </p>
 
