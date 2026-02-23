@@ -34,18 +34,28 @@ export default function Reconocimiento() {
                 method: 'POST',
                 body: form,
             });
-            if (!res.ok) {
-                const bodyText = await res.text();
-                try {
-                    const j = JSON.parse(bodyText);
-                    const msg = j.error || j.message || bodyText;
-                    throw new Error(j.suggestion ? `${msg} — ${j.suggestion}` : msg);
-                } catch (e: unknown) {
-                    if (e instanceof Error) throw e;
-                    throw new Error(bodyText || 'API error');
-                }
+            const bodyText = await res.text();
+
+            // Si el servidor devuelve HTML (404, 500, etc.) en lugar de JSON, no hacer .json()
+            const looksLikeHtml = bodyText.trimStart().startsWith('<');
+            if (looksLikeHtml) {
+                throw new Error(
+                    'El servidor respondió con una página en lugar de datos. Comprueba que OPENAI_API_KEY esté configurada en el servidor (p. ej. en Render) y que la ruta /api/ai-recognition esté disponible.'
+                );
             }
-            const data = await res.json();
+
+            let data: Record<string, unknown>;
+            try {
+                data = JSON.parse(bodyText) as Record<string, unknown>;
+            } catch {
+                throw new Error(bodyText || 'API error');
+            }
+
+            if (!res.ok) {
+                const msg = (data?.error as string) || (data?.message as string) || bodyText;
+                const suggestion = data?.suggestion as string | undefined;
+                throw new Error(suggestion ? `${msg} — ${suggestion}` : msg);
+            }
 
             // create image data URL as fallback if needed
             let imgDataUrl: string | null = null;
