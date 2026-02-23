@@ -1,4 +1,9 @@
-@import "tailwindcss";
+/* Base path fijo para que Tailwind escanee siempre app, components y pages
+   (en Render el CWD puede diferir y no generar clases responsive como lg:hidden) */
+@import "tailwindcss" source("..");
+@source "../components";
+@source ".";
+@source "../pages";
 
 /* Choices.js: selected pills use project primary color */
 .choices__list--multiple .choices__item {
