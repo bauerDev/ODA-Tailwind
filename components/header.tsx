@@ -49,7 +49,7 @@ export default function Header() {
   );
 
   return (
-    <header style={{ backgroundColor: "var(--primary)" }} className="relative">
+    <header data-oda-header style={{ backgroundColor: "var(--primary)" }} className="relative">
       <div className="container mx-auto flex h-16 min-h-16 items-center justify-between">
         <Link href="/" className="shrink-0" onClick={closeMobileMenu}>
           <h1 className="text-xl leading-tight sm:text-2xl" style={{ fontFamily: "var(--font-family-heading)", color: "var(--primary-foreground)" }}>
@@ -59,7 +59,7 @@ export default function Header() {
         </Link>
 
         {/* Navegación desktop: visible solo en lg+ */}
-        <nav className="hidden items-center gap-6 lg:flex xl:gap-10">
+        <nav className="oda-header-desktop-nav hidden items-center gap-6 lg:flex xl:gap-10">
           {navLinks}
         </nav>
 
@@ -67,7 +67,7 @@ export default function Header() {
         <button
           type="button"
           onClick={() => setIsMobileMenuOpen((o) => !o)}
-          className="flex h-10 w-10 shrink-0 items-center justify-center border-none bg-transparent p-0 opacity-90 transition-opacity hover:opacity-100 lg:hidden"
+          className="oda-header-mobile-btn flex h-10 w-10 shrink-0 items-center justify-center border-none bg-transparent p-0 opacity-90 transition-opacity hover:opacity-100 lg:hidden"
           aria-label={isMobileMenuOpen ? "Cerrar menú" : "Abrir menú"}
           style={{ color: "var(--primary-foreground)" }}
         >
@@ -236,7 +236,7 @@ export default function Header() {
 
       {/* Menú móvil: panel desplegable */}
       <div
-        className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out lg:hidden ${isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"}`}
+        className={`oda-header-mobile-panel overflow-hidden transition-[max-height,opacity] duration-300 ease-out lg:hidden ${isMobileMenuOpen ? "oda-mobile-panel-open max-h-[80vh] opacity-100" : "max-h-0 opacity-0"}`}
         style={{ backgroundColor: "var(--primary)" }}
         aria-hidden={!isMobileMenuOpen}
       >

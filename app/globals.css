@@ -1,9 +1,48 @@
-/* Base path fijo para que Tailwind escanee siempre app, components y pages
-   (en Render el CWD puede diferir y no generar clases responsive como lg:hidden) */
+/* Base path fijo para que Tailwind escanee siempre app, components y pages */
 @import "tailwindcss" source("..");
 @source "../components";
 @source ".";
 @source "../pages";
+
+/* Safelist: forzar clases responsive del header (menú hamburguesa) en producción/Render.
+   En Tailwind v4 las variantes se declaran con {lg:}utilidad (ver https://blakejones.dev/blog/how-to-make-a-safelist-in-tailwind-v4.1%2B) */
+@source inline("{lg:,}hidden");
+@source inline("{lg:,}flex");
+@source inline("{xl:,}gap-10");
+@source inline("{sm:,}flex");
+@source inline("{sm:,}gap-4");
+@source inline("{sm:,}text-2xl");
+@source inline("{sm:,}text-xl");
+@source inline("max-h-[80vh]");
+@source inline("max-h-0");
+
+/* Fallback: si Tailwind no genera las clases en Render, estas reglas aseguran el menú hamburguesa */
+[data-oda-header] .oda-header-desktop-nav {
+  display: none;
+}
+[data-oda-header] .oda-header-mobile-btn {
+  display: flex;
+}
+[data-oda-header] .oda-header-mobile-panel {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+[data-oda-header] .oda-header-mobile-panel.oda-mobile-panel-open {
+  max-height: 80vh;
+  opacity: 1;
+}
+@media (min-width: 1024px) {
+  [data-oda-header] .oda-header-desktop-nav {
+    display: flex;
+  }
+  [data-oda-header] .oda-header-mobile-btn {
+    display: none;
+  }
+  [data-oda-header] .oda-header-mobile-panel {
+    display: none;
+  }
+}
 
 /* Choices.js: selected pills use project primary color */
 .choices__list--multiple .choices__item {
