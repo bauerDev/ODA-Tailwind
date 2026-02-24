@@ -80,7 +80,16 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "google") {
-          const dbUser = await findUserByGoogleId(user.id as string);
+          let dbUser = await findUserByGoogleId(user.id as string);
+          if (!dbUser && user.email) {
+            await ensureUsersTable();
+            await upsertGoogleUser({
+              email: user.email,
+              name: (user.name as string) ?? user.email,
+              google_id: user.id as string,
+            });
+            dbUser = await findUserByGoogleId(user.id as string) ?? await findUserByEmail(user.email);
+          }
           if (dbUser) {
             token.id = String(dbUser.id);
             token.isAdmin = !!dbUser.is_admin;
