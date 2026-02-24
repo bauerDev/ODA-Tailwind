@@ -411,7 +411,7 @@ export default function GaleriaPage() {
                     <>
                       <div
                         ref={yearSliderRef}
-                        className="year-range-slider relative h-8 w-full"
+                        className="year-range-slider relative h-8 w-full touch-none select-none"
                         style={{ ["--year-min" as string]: yearMinDb, ["--year-max" as string]: yearMaxDb }}
                         onPointerDownCapture={onYearSliderPointerDown}
                         onPointerMove={onYearSliderPointerMove}
