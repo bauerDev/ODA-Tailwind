@@ -41,6 +41,11 @@ export default function GaleriaPage() {
   const [choicesReady, setChoicesReady] = useState(false);
   /** True once pending year has been synced with DB range (avoids slider showing full range for one frame). */
   const [yearRangeSynced, setYearRangeSynced] = useState(false);
+  /** Texto en los inputs de año (para edición; se sincroniza con el slider). */
+  const [yearMinText, setYearMinText] = useState("");
+  const [yearMaxText, setYearMaxText] = useState("");
+  const [yearMinInputFocused, setYearMinInputFocused] = useState(false);
+  const [yearMaxInputFocused, setYearMaxInputFocused] = useState(false);
 
   const yearSliderRef = useRef<HTMLDivElement>(null);
   const yearMinInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +60,10 @@ export default function GaleriaPage() {
       max: Math.max(pendingYearMin, pendingYearMax),
     };
   }, [pendingYearMin, pendingYearMax]);
+
+  const currentYearMin = Math.min(pendingYearMin, pendingYearMax);
+  const currentYearMax = Math.max(pendingYearMin, pendingYearMax);
+
   const authorSelectRef = useRef<HTMLSelectElement>(null);
   const movementSelectRef = useRef<HTMLSelectElement>(null);
   const techniqueSelectRef = useRef<HTMLSelectElement>(null);
@@ -187,6 +196,41 @@ export default function GaleriaPage() {
       yearDragActiveRef.current = null;
     }
   }, []);
+
+  /** Aplicar valor escrito en el input de año mínimo. */
+  const commitYearMinFromText = useCallback(
+    (text: string) => {
+      const n = parseInt(text.trim(), 10);
+      if (isNaN(n)) {
+        setPendingYearMin(yearMinDb);
+        setYearMinText(String(yearMinDb));
+        return;
+      }
+      const clamped = Math.max(yearMinDb, Math.min(n, yearMaxDb));
+      const currentMax = Math.max(pendingYearMin, pendingYearMax);
+      setPendingYearMin(clamped);
+      if (clamped > currentMax) setPendingYearMax(clamped);
+      setYearMinText(String(clamped));
+    },
+    [yearMinDb, yearMaxDb, pendingYearMin, pendingYearMax]
+  );
+  /** Aplicar valor escrito en el input de año máximo. */
+  const commitYearMaxFromText = useCallback(
+    (text: string) => {
+      const n = parseInt(text.trim(), 10);
+      if (isNaN(n)) {
+        setPendingYearMax(yearMaxDb);
+        setYearMaxText(String(yearMaxDb));
+        return;
+      }
+      const clamped = Math.max(yearMinDb, Math.min(n, yearMaxDb));
+      const currentMin = Math.min(pendingYearMin, pendingYearMax);
+      setPendingYearMax(clamped);
+      if (clamped < currentMin) setPendingYearMin(clamped);
+      setYearMaxText(String(clamped));
+    },
+    [yearMinDb, yearMaxDb, pendingYearMin, pendingYearMax]
+  );
 
   const clearFilters = useCallback(() => {
     const empty = new Set<string>();
@@ -420,9 +464,62 @@ export default function GaleriaPage() {
                           aria-label="To year"
                         />
                       </div>
-                      <p className="mt-1 text-xs text-(--muted-foreground)">
-                        Range: {Math.min(pendingYearMin, pendingYearMax)} – {Math.max(pendingYearMin, pendingYearMax)}
+                      {/* Escritorio: solo texto del rango */}
+                      <p className="mt-1 hidden text-xs text-(--muted-foreground) lg:block">
+                        Range: {currentYearMin} – {currentYearMax}
                       </p>
+                      {/* Móvil y tablet: inputs editables */}
+                      <div className="mt-1 flex items-center gap-0.5 lg:hidden">
+                        <label className="sr-only" htmlFor="year-range-min">Desde año</label>
+                        <input
+                          id="year-range-min"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          aria-label="Desde año"
+                          value={yearMinInputFocused ? yearMinText : String(currentYearMin)}
+                          onChange={(e) => setYearMinText(e.target.value)}
+                          onFocus={() => {
+                            setYearMinInputFocused(true);
+                            setYearMinText(String(currentYearMin));
+                          }}
+                          onBlur={() => {
+                            setYearMinInputFocused(false);
+                            commitYearMinFromText(yearMinText);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="w-9 min-w-0 rounded border border-(--border) bg-(--background) px-0.5 py-px text-center text-[10px] leading-tight text-(--foreground) [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                        <span className="text-[9px] text-(--muted-foreground)" aria-hidden>–</span>
+                        <label className="sr-only" htmlFor="year-range-max">Hasta año</label>
+                        <input
+                          id="year-range-max"
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          aria-label="Hasta año"
+                          value={yearMaxInputFocused ? yearMaxText : String(currentYearMax)}
+                          onChange={(e) => setYearMaxText(e.target.value)}
+                          onFocus={() => {
+                            setYearMaxInputFocused(true);
+                            setYearMaxText(String(currentYearMax));
+                          }}
+                          onBlur={() => {
+                            setYearMaxInputFocused(false);
+                            commitYearMaxFromText(yearMaxText);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              (e.target as HTMLInputElement).blur();
+                            }
+                          }}
+                          className="w-9 min-w-0 rounded border border-(--border) bg-(--background) px-0.5 py-px text-center text-[10px] leading-tight text-(--foreground) [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        />
+                      </div>
                     </>
                   ) : (
                     <div className="flex h-8 min-h-10 items-center rounded border border-(--border) bg-(--background) px-3 text-sm text-(--muted-foreground)">
