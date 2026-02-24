@@ -45,6 +45,16 @@ export default function GaleriaPage() {
   const yearSliderRef = useRef<HTMLDivElement>(null);
   const yearMinInputRef = useRef<HTMLInputElement>(null);
   const yearMaxInputRef = useRef<HTMLInputElement>(null);
+  /** Durante arrastre: qué thumb se está moviendo (evita que ambos reciban el mismo valor en móvil). */
+  const yearDragActiveRef = useRef<"min" | "max" | null>(null);
+  /** Valores actuales del rango para usarlos en pointer move sin closure obsoleta. */
+  const yearValuesRef = useRef({ min: 0, max: 2100 });
+  useEffect(() => {
+    yearValuesRef.current = {
+      min: Math.min(pendingYearMin, pendingYearMax),
+      max: Math.max(pendingYearMin, pendingYearMax),
+    };
+  }, [pendingYearMin, pendingYearMax]);
   const authorSelectRef = useRef<HTMLSelectElement>(null);
   const movementSelectRef = useRef<HTMLSelectElement>(null);
   const techniqueSelectRef = useRef<HTMLSelectElement>(null);
@@ -106,50 +116,77 @@ export default function GaleriaPage() {
     setAppliedTechnique(new Set(pendingTechnique));
   }, [pendingAuthor, pendingYearMin, pendingYearMax, pendingMovement, pendingTechnique]);
 
-  /** On slider pointer down: choose which thumb is closer to the click and give it the event so the correct handle moves. */
+  /** Convierte clientX en valor de año según la posición en el track del slider. */
+  const clientXToYear = useCallback(
+    (clientX: number) => {
+      const container = yearSliderRef.current;
+      if (!container) return yearMinDb;
+      const rect = container.getBoundingClientRect();
+      const trackLeft = rect.left + 10;
+      const trackWidth = Math.max(1, rect.width - 20);
+      const range = yearMaxDb - yearMinDb || 1;
+      const pct = Math.max(0, Math.min(1, (clientX - trackLeft) / trackWidth));
+      return Math.round(yearMinDb + pct * range);
+    },
+    [yearMinDb, yearMaxDb]
+  );
+
+  /** Pointer down: siempre tomamos el control; movemos solo el thumb más cercano al toque (evita 1491-1491 en móvil). */
   const onYearSliderPointerDown = useCallback(
     (e: React.PointerEvent) => {
       const container = yearSliderRef.current;
       const minInput = yearMinInputRef.current;
       const maxInput = yearMaxInputRef.current;
       if (!container || !minInput || !maxInput) return;
-      const target = e.target as Node;
-      if (target !== minInput && target !== maxInput) return;
+      e.preventDefault();
+      e.stopPropagation();
       const rect = container.getBoundingClientRect();
       const trackLeft = rect.left + 10;
-      const trackWidth = rect.width - 20;
+      const trackWidth = Math.max(1, rect.width - 20);
       const range = yearMaxDb - yearMinDb || 1;
-      const minPct = (Math.min(pendingYearMin, pendingYearMax) - yearMinDb) / range;
-      const maxPct = (Math.max(pendingYearMin, pendingYearMax) - yearMinDb) / range;
-      const minX = trackLeft + trackWidth * minPct;
-      const maxX = trackLeft + trackWidth * maxPct;
       const clickX = e.clientX;
+      const yearAtClick = clientXToYear(clickX);
+      const { min: currentMin, max: currentMax } = yearValuesRef.current;
+      const minX = trackLeft + (trackWidth * (currentMin - yearMinDb)) / range;
+      const maxX = trackLeft + (trackWidth * (currentMax - yearMinDb)) / range;
       const mid = (minX + maxX) / 2;
       const useMin = clickX <= mid;
       setYearRangeActive(useMin ? "min" : "max");
-      const chosen = useMin ? minInput : maxInput;
-      if (target === chosen) return;
-      e.preventDefault();
-      e.stopPropagation();
-      chosen.dispatchEvent(
-        new PointerEvent("pointerdown", {
-          bubbles: true,
-          cancelable: true,
-          clientX: e.clientX,
-          clientY: e.clientY,
-          screenX: e.screenX,
-          screenY: e.screenY,
-          pointerId: e.pointerId,
-          pointerType: e.pointerType,
-          isPrimary: e.isPrimary,
-          pressure: e.pressure,
-          width: e.width,
-          height: e.height,
-        })
-      );
+      yearDragActiveRef.current = useMin ? "min" : "max";
+      if (useMin) {
+        const newMin = Math.max(yearMinDb, Math.min(yearAtClick, currentMax));
+        setPendingYearMin(newMin);
+      } else {
+        const newMax = Math.min(yearMaxDb, Math.max(yearAtClick, currentMin));
+        setPendingYearMax(newMax);
+      }
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [pendingYearMin, pendingYearMax, yearMinDb, yearMaxDb]
+    [yearMinDb, yearMaxDb, clientXToYear]
   );
+
+  const onYearSliderPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      if (yearDragActiveRef.current === null) return;
+      const { min: currentMin, max: currentMax } = yearValuesRef.current;
+      const year = clientXToYear(e.clientX);
+      if (yearDragActiveRef.current === "min") {
+        const newMin = Math.max(yearMinDb, Math.min(year, currentMax));
+        setPendingYearMin(newMin);
+      } else {
+        const newMax = Math.min(yearMaxDb, Math.max(year, currentMin));
+        setPendingYearMax(newMax);
+      }
+    },
+    [yearMinDb, yearMaxDb, clientXToYear]
+  );
+
+  const onYearSliderPointerUp = useCallback((e: React.PointerEvent) => {
+    if (yearDragActiveRef.current !== null) {
+      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      yearDragActiveRef.current = null;
+    }
+  }, []);
 
   const clearFilters = useCallback(() => {
     const empty = new Set<string>();
@@ -333,6 +370,9 @@ export default function GaleriaPage() {
                         className="year-range-slider relative h-8 w-full"
                         style={{ ["--year-min" as string]: yearMinDb, ["--year-max" as string]: yearMaxDb }}
                         onPointerDownCapture={onYearSliderPointerDown}
+                        onPointerMove={onYearSliderPointerMove}
+                        onPointerUp={onYearSliderPointerUp}
+                        onPointerCancel={onYearSliderPointerUp}
                       >
                         <div className="absolute left-[10px] right-[10px] top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-(--muted)" />
                         <div
@@ -360,7 +400,7 @@ export default function GaleriaPage() {
                             setPendingYearMin(v);
                             if (v > pendingYearMax) setPendingYearMax(v);
                           }}
-                          className={`year-range-input absolute left-[10px] right-[10px] top-0 h-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-(--primary) [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-runnable-track]:h-5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ${yearRangeActive === "min" ? "z-10" : "z-0"}`}
+                          className={`year-range-input pointer-events-none absolute left-[10px] right-[10px] top-0 h-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-(--primary) [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-runnable-track]:h-5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ${yearRangeActive === "min" ? "z-10" : "z-0"}`}
                           aria-label="From year"
                         />
                         <label className="sr-only" htmlFor="filter-year-max">To year</label>
@@ -376,7 +416,7 @@ export default function GaleriaPage() {
                             setPendingYearMax(v);
                             if (v < pendingYearMin) setPendingYearMin(v);
                           }}
-                          className={`year-range-input absolute left-[10px] right-[10px] top-0 h-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-(--primary) [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-runnable-track]:h-5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ${yearRangeActive === "max" ? "z-10" : "z-0"}`}
+                          className={`year-range-input pointer-events-none absolute left-[10px] right-[10px] top-0 h-full cursor-pointer appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-10 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white [&::-webkit-slider-thumb]:bg-(--primary) [&::-webkit-slider-thumb]:shadow [&::-webkit-slider-runnable-track]:h-5 [&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:bg-transparent ${yearRangeActive === "max" ? "z-10" : "z-0"}`}
                           aria-label="To year"
                         />
                       </div>
