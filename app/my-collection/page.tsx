@@ -20,6 +20,9 @@ export default function MiColeccion() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{ id: number; name: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const fetchCollections = async () => {
     const res = await fetch('/api/collections');
@@ -75,6 +78,26 @@ export default function MiColeccion() {
       setError('Something went wrong');
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteCollection() {
+    if (!deleteModal) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/collections/${deleteModal.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setDeleteError(err.error || 'Could not delete collection');
+        return;
+      }
+      await fetchCollections();
+      setDeleteModal(null);
+    } catch {
+      setDeleteError('Could not delete collection');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -149,22 +172,36 @@ export default function MiColeccion() {
               </div>
             ) : (
               collections.map((col) => (
-                <Link
+                <div
                   key={col.id}
-                  href={`/my-collection/${col.id}`}
                   className="flex flex-col rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) transition-all duration-200 hover:border-(--primary) hover:shadow-md"
                 >
-                  <div className="mb-2 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-(--primary)">
-                      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-                    </svg>
-                    <h3 className="font-(--font-family-heading) text-lg text-(--foreground)">{col.name}</h3>
-                  </div>
-                  {col.description && (
-                    <p className="line-clamp-2 text-sm text-(--muted-foreground)">{col.description}</p>
-                  )}
-                  <span className="mt-2 text-xs text-(--muted-foreground)">{col.visibility === 'publica' ? 'Public' : 'Private'}</span>
-                </Link>
+                  <Link href={`/my-collection/${col.id}`} className="flex flex-col min-w-0 flex-1">
+                    <div className="mb-2 flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-(--primary)">
+                        <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                      </svg>
+                      <h3 className="font-(--font-family-heading) text-lg text-(--foreground)">{col.name}</h3>
+                    </div>
+                    {col.description && (
+                      <p className="line-clamp-2 text-sm text-(--muted-foreground)">{col.description}</p>
+                    )}
+                    <span className="mt-2 text-xs text-(--muted-foreground)">{col.visibility === 'publica' ? 'Public' : 'Private'}</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setDeleteModal({ id: col.id, name: col.name });
+                      setDeleteError(null);
+                    }}
+                    className="mt-(--spacing-md) w-full rounded-none bg-(--primary) px-4 py-2 font-(--font-family-heading) text-sm text-(--primary-foreground) transition hover:opacity-90"
+                    aria-label={`Delete collection ${col.name}`}
+                  >
+                    Delete collection
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -207,6 +244,36 @@ export default function MiColeccion() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => !deleting && setDeleteModal(null)}>
+          <div className="w-full max-w-md rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <h2 className="mb-2 font-(--font-family-heading) text-xl text-(--foreground)">Delete collection?</h2>
+            <p className="mb-(--spacing-lg) text-sm text-(--muted-foreground)">
+              This will permanently delete &quot;{deleteModal.name}&quot; and remove all artworks from it. This cannot be undone.
+            </p>
+            {deleteError && <p className="mb-3 text-sm text-red-600">{deleteError}</p>}
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteModal(null)}
+                disabled={deleting}
+                className="flex-1 rounded-none border border-(--border) bg-(--background) px-4 py-2 font-(--font-family-heading) text-(--foreground) hover:bg-(--muted) disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteCollection}
+                disabled={deleting}
+                className="flex-1 rounded-none bg-(--primary) px-4 py-2 font-(--font-family-heading) text-(--primary-foreground) hover:opacity-90 disabled:opacity-50"
+              >
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
