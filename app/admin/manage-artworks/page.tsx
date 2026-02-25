@@ -37,6 +37,8 @@ export default function ManageArtworks() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyArtwork);
+  const [artworkToDelete, setArtworkToDelete] = useState<Artwork | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   /** Fetches all artworks from the API */
   const loadArtworks = () => {
@@ -116,16 +118,19 @@ export default function ManageArtworks() {
     }
   };
 
-  /** Deletes an artwork by ID; asks for confirmation and reloads the list */
+  /** Deletes an artwork by ID (called after modal confirm); reloads the list */
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this artwork?")) return;
+    setDeletingId(id);
     try {
       const res = await fetch(`/api/artworks/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error(await res.text());
+      setArtworkToDelete(null);
       loadArtworks();
     } catch (err) {
       console.error(err);
       alert("Error deleting artwork");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -232,11 +237,12 @@ export default function ManageArtworks() {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(a.id)}
-                            className="bg-(--primary) text-(--primary-foreground) px-2 py-1 text-sm hover:opacity-90"
+                            onClick={() => setArtworkToDelete(a)}
+                            disabled={deletingId === a.id}
+                            className="bg-(--primary) text-(--primary-foreground) px-2 py-1 text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                             title="Delete"
                           >
-                            Delete
+                            {deletingId === a.id ? "…" : "Delete"}
                           </button>
                         </div>
                       </td>
@@ -378,6 +384,43 @@ export default function ManageArtworks() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {artworkToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => !deletingId && setArtworkToDelete(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="mb-2 font-(--font-family-heading) text-xl text-(--foreground)">
+              Delete artwork?
+            </h2>
+            <p className="mb-(--spacing-lg) text-sm text-(--muted-foreground)">
+              This will permanently delete &quot;{artworkToDelete.title}&quot; by {artworkToDelete.author}. This cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setArtworkToDelete(null)}
+                disabled={!!deletingId}
+                className="flex-1 rounded-none border border-(--border) bg-(--background) px-4 py-2 font-(--font-family-heading) text-(--foreground) hover:bg-(--muted) disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(artworkToDelete.id)}
+                disabled={!!deletingId}
+                className="flex-1 rounded-none bg-(--primary) px-4 py-2 font-(--font-family-heading) text-(--primary-foreground) hover:opacity-90 disabled:opacity-50"
+              >
+                {deletingId ? "Deleting…" : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}
