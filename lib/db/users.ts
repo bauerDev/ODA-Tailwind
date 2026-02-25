@@ -81,6 +81,47 @@ export async function findUserById(id: number): Promise<UserRow | null> {
   return result.rows[0] ?? null;
 }
 
+/** JWT token shape (id and email from NextAuth). */
+export type AuthToken = { id?: string; email?: string | null; name?: string | null };
+
+/**
+ * Resolve JWT token to the numeric database user id. Use this in API routes with getToken().
+ * Tries by id, then by google_id, then by email, then upsert for Google.
+ */
+export async function resolveTokenUserId(token: AuthToken | null): Promise<number | null> {
+  if (!token || (!token.id && !token.email)) return null;
+  const rawId = token.id;
+  const email = token.email ?? null;
+
+  const idNum = rawId ? parseInt(rawId, 10) : null;
+  if (idNum != null && Number.isSafeInteger(idNum) && idNum > 0) {
+    const byId = await findUserById(idNum);
+    if (byId) return byId.id;
+  }
+  if (rawId && typeof rawId === "string") {
+    const byGoogle = await findUserByGoogleId(rawId);
+    if (byGoogle) return byGoogle.id;
+  }
+  if (email) {
+    const byEmail = await findUserByEmail(email);
+    if (byEmail) return byEmail.id;
+  }
+  if (rawId && email) {
+    try {
+      await ensureUsersTable();
+      const created = await upsertGoogleUser({
+        email,
+        name: (token.name as string) ?? email,
+        google_id: rawId,
+      });
+      return created.id;
+    } catch (e) {
+      console.error("resolveTokenUserId upsert:", e);
+    }
+  }
+  return null;
+}
+
 /**
  * Resolve session to the numeric database user id. Handles Google users where session.user.id
  * might be the Google id string instead of users.id. Tries by id, then by google_id, then by email.

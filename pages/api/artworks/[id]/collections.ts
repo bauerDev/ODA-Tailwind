@@ -5,9 +5,10 @@
  * If there is no session, returns [].
  */
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
-import { resolveSessionUserId } from "../../../../lib/db/users";
+import { resolveTokenUserId, resolveSessionUserId } from "../../../../lib/db/users";
 import { getCollectionsContainingArtwork } from "../../../../lib/db/collections";
 
 export default async function handler(
@@ -28,8 +29,13 @@ export default async function handler(
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  const userId = await resolveSessionUserId(session);
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = secret ? await getToken({ req, secret }) : null;
+  let userId = token ? await resolveTokenUserId(token) : null;
+  if (userId == null) {
+    const session = await getServerSession(req, res, authOptions);
+    userId = await resolveSessionUserId(session);
+  }
 
   if (!userId) {
     return res.status(200).json([]);

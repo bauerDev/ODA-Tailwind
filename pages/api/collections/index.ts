@@ -2,12 +2,13 @@
  * API /api/collections
  * GET: Lists the logged-in user's collections (for /my-collection and "Add to collection" modal).
  * POST: Creates a new collection (name required; description and visibility optional).
- * Requires session in both cases.
+ * Requires session in both cases. Uses getToken (JWT) first so Google sign-in works in API routes.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
-import { resolveSessionUserId } from "../../../lib/db/users";
+import { resolveTokenUserId, resolveSessionUserId } from "../../../lib/db/users";
 import {
   ensureCollectionsTables,
   listCollectionsByUserId,
@@ -19,8 +20,13 @@ export default async function handler(
   res: NextApiResponse
 ) {
   await ensureCollectionsTables();
-  const session = await getServerSession(req, res, authOptions);
-  const userId = await resolveSessionUserId(session);
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = secret ? await getToken({ req, secret }) : null;
+  let userId = token ? await resolveTokenUserId(token) : null;
+  if (userId == null) {
+    const session = await getServerSession(req, res, authOptions);
+    userId = await resolveSessionUserId(session);
+  }
 
   if (req.method === "GET") {
     if (!userId) {
