@@ -6,7 +6,7 @@ import {
   findUserByEmail,
   findUserByGoogleId,
   verifyPassword,
-  upsertGoogleUser,
+  ensureGoogleUserInDb,
 } from "./db/users";
 
 export const authOptions: NextAuthOptions = {
@@ -64,17 +64,11 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async signIn({ user, account }) {
       if (account?.provider === "google" && user.email && user.id) {
-        try {
-          await ensureUsersTable();
-          await upsertGoogleUser({
-            email: user.email,
-            name: user.name ?? user.email,
-            google_id: user.id,
-          });
-        } catch (e) {
-          console.error("Google signIn user upsert:", e);
-          // Don't block sign-in if DB fails (e.g. production cold start)
-        }
+        await ensureGoogleUserInDb({
+          email: user.email,
+          name: (user.name as string) ?? user.email,
+          google_id: user.id as string,
+        });
       }
       return true;
     },
@@ -83,30 +77,19 @@ export const authOptions: NextAuthOptions = {
         if (user.email) token.email = user.email;
         if (user.name) token.name = user.name;
         if (account?.provider === "google") {
-          try {
-            let dbUser = await findUserByGoogleId(user.id as string);
-            if (!dbUser && user.email) {
-              await ensureUsersTable();
-              await upsertGoogleUser({
-                email: user.email,
-                name: (user.name as string) ?? user.email,
-                google_id: user.id as string,
-              });
-              dbUser = await findUserByGoogleId(user.id as string) ?? await findUserByEmail(user.email);
-            }
-            if (dbUser) {
-              token.id = String(dbUser.id);
-              token.isAdmin = !!dbUser.is_admin;
-              token.role = dbUser.user_type === "docente" ? "Teacher" : "Student";
-            } else {
-              token.id = user.id as string;
-              token.isAdmin = false;
-              token.role = "Student";
-            }
-          } catch (e) {
-            console.error("Google jwt callback (DB):", e);
-            // Fallback so login still succeeds if DB fails
-            token.id = user.id as string;
+          const email = (user.email as string) || "";
+          const name = (user.name as string) || email;
+          const googleId = user.id as string;
+          let dbUser = await ensureGoogleUserInDb({ email, name, google_id: googleId });
+          if (!dbUser) {
+            dbUser = await findUserByGoogleId(googleId) ?? (email ? await findUserByEmail(email) : null);
+          }
+          if (dbUser) {
+            token.id = String(dbUser.id);
+            token.isAdmin = !!dbUser.is_admin;
+            token.role = dbUser.user_type === "docente" ? "Teacher" : "Student";
+          } else {
+            token.id = googleId;
             token.isAdmin = false;
             token.role = "Student";
           }

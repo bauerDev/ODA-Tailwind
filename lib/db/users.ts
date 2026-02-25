@@ -222,3 +222,29 @@ export async function upsertGoogleUser(params: {
   );
   return result.rows[0];
 }
+
+/**
+ * Ensures the users table exists and the Google user is created/updated in the DB.
+ * Use this in NextAuth callbacks (signIn, jwt) so the user appears in manage-users.
+ * Retries once after 1s on failure (e.g. DB cold start on Render).
+ */
+export async function ensureGoogleUserInDb(params: {
+  email: string;
+  name: string;
+  google_id: string;
+}): Promise<UserRow | null> {
+  const tryOnce = async (): Promise<UserRow | null> => {
+    try {
+      await ensureUsersTable();
+      return await upsertGoogleUser(params);
+    } catch (e) {
+      console.error("ensureGoogleUserInDb:", e);
+      return null;
+    }
+  };
+  let row = await tryOnce();
+  if (row) return row;
+  await new Promise((r) => setTimeout(r, 1000));
+  row = await tryOnce().then((r) => r ?? null);
+  return row;
+}
