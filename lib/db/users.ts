@@ -214,11 +214,13 @@ export async function upsertGoogleUser(params: {
     return updated.rows[0];
   }
 
+  // password/password_hash required by DB NOT NULL; use placeholder so Google-only users can't login with credentials
+  const noPassword = "";
   const result = await pool.query(
-    `INSERT INTO users (email, name, google_id, user_type)
-     VALUES ($1, $2, $3, 'alumno')
+    `INSERT INTO users (email, name, google_id, user_type, password, password_hash)
+     VALUES ($1, $2, $3, 'alumno', $4, $4)
      RETURNING *`,
-    [params.email, params.name, params.google_id]
+    [params.email, params.name, params.google_id, noPassword]
   );
   return result.rows[0];
 }
