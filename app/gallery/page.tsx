@@ -45,6 +45,15 @@ export default function GaleriaPage() {
   const [appliedMovement, setAppliedMovement] = useState<Set<string>>(new Set());
   const [appliedTechnique, setAppliedTechnique] = useState<Set<string>>(new Set());
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchFilter, setSearchFilter] = useState("");
+
+  /** Debounce search: update searchFilter 250ms after user stops typing */
+  useEffect(() => {
+    const t = setTimeout(() => setSearchFilter(searchQuery.trim()), 250);
+    return () => clearTimeout(t);
+  }, [searchQuery]);
+
   /** Which year range input is on top (for dual-thumb slider); the one being dragged receives events. */
   const [yearRangeActive, setYearRangeActive] = useState<"min" | "max">("max");
   /** True once Choices.js has replaced the native selects (avoids flash of native options). */
@@ -126,6 +135,12 @@ export default function GaleriaPage() {
 
   const filteredArtworks = useMemo(() => {
     return artworks.filter((a) => {
+      if (searchFilter) {
+        const q = searchFilter.toLowerCase();
+        const titleMatch = (a.title ?? "").toLowerCase().includes(q);
+        const authorMatch = (a.author ?? "").toLowerCase().includes(q);
+        if (!titleMatch && !authorMatch) return false;
+      }
       if (appliedAuthor.size > 0 && !appliedAuthor.has(a.author)) return false;
       if (appliedYearMin != null && appliedYearMax != null) {
         const y = parseYear(a.year);
@@ -135,7 +150,7 @@ export default function GaleriaPage() {
       if (appliedTechnique.size > 0 && !appliedTechnique.has(a.technique)) return false;
       return true;
     });
-  }, [artworks, appliedAuthor, appliedYearMin, appliedYearMax, appliedMovement, appliedTechnique]);
+  }, [artworks, searchFilter, appliedAuthor, appliedYearMin, appliedYearMax, appliedMovement, appliedTechnique]);
 
   const filteredArtworkIds = useMemo(() => filteredArtworks.map((a) => a.id).join(","), [filteredArtworks]);
 
@@ -236,6 +251,8 @@ export default function GaleriaPage() {
     [choicesRef.current.author, choicesRef.current.movement, choicesRef.current.technique].forEach((c) => {
       c?.removeActiveItems?.();
     });
+    setSearchQuery("");
+    setSearchFilter("");
     setPendingAuthor(empty);
     setPendingYearMin(yearMinDb);
     setPendingYearMax(yearMaxDb);
@@ -352,6 +369,20 @@ export default function GaleriaPage() {
 
           <div className="mt-(--spacing-lg) rounded-none bg-[#f5f5f0] p-(--spacing-lg) shadow-sm">
               <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="col-span-full">
+                  <label htmlFor="filter-search" className="mb-2 block font-(--font-family-heading) text-[15px] text-[#1a1a1a]">
+                    Search by title or author
+                  </label>
+                  <input
+                    id="filter-search"
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Type to search…"
+                    className="w-full border border-(--border) bg-(--background) px-4 py-2 text-(--foreground) outline-none focus:border-(--primary)"
+                    aria-label="Search by title or author"
+                  />
+                </div>
                 <div>
                   <label htmlFor="filter-author" className="mb-2 block font-(--font-family-heading) text-[15px] text-[#1a1a1a]">
                     Author
