@@ -75,6 +75,30 @@ export async function findUserByGoogleId(googleId: string): Promise<UserRow | nu
   return result.rows[0] ?? null;
 }
 
+/** Get user by numeric id (users.id). Use this to resolve session.user.id to DB user. */
+export async function findUserById(id: number): Promise<UserRow | null> {
+  const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
+  return result.rows[0] ?? null;
+}
+
+/**
+ * Resolve session to the numeric database user id. Handles Google users where session.user.id
+ * might be the Google id string instead of users.id. Tries by id first, then by email.
+ */
+export async function resolveSessionUserId(session: { user?: { id?: string; email?: string | null } } | null): Promise<number | null> {
+  if (!session?.user?.id && !session?.user?.email) return null;
+  const idFromSession = session.user.id ? parseInt(session.user.id, 10) : null;
+  if (Number.isSafeInteger(idFromSession) && idFromSession! > 0) {
+    const byId = await findUserById(idFromSession!);
+    if (byId) return byId.id;
+  }
+  if (session.user.email) {
+    const byEmail = await findUserByEmail(session.user.email);
+    if (byEmail) return byEmail.id;
+  }
+  return null;
+}
+
 export async function createUser(params: {
   email: string;
   name: string;
