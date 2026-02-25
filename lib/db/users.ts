@@ -83,19 +83,47 @@ export async function findUserById(id: number): Promise<UserRow | null> {
 
 /**
  * Resolve session to the numeric database user id. Handles Google users where session.user.id
- * might be the Google id string instead of users.id. Tries by id first, then by email.
+ * might be the Google id string instead of users.id. Tries by id, then by google_id, then by email.
  */
-export async function resolveSessionUserId(session: { user?: { id?: string; email?: string | null } } | null): Promise<number | null> {
-  if (!session?.user?.id && !session?.user?.email) return null;
-  const idFromSession = session.user.id ? parseInt(session.user.id, 10) : null;
-  if (Number.isSafeInteger(idFromSession) && idFromSession! > 0) {
-    const byId = await findUserById(idFromSession!);
+export async function resolveSessionUserId(session: { user?: { id?: string; email?: string | null; name?: string | null } } | null): Promise<number | null> {
+  if (!session?.user) return null;
+  const { id: rawId, email } = session.user;
+  if (!rawId && !email) return null;
+
+  // 1) Try numeric users.id (Credentials or JWT with db id)
+  const idNum = rawId ? parseInt(rawId, 10) : null;
+  if (idNum != null && Number.isSafeInteger(idNum) && idNum > 0) {
+    const byId = await findUserById(idNum);
     if (byId) return byId.id;
   }
-  if (session.user.email) {
-    const byEmail = await findUserByEmail(session.user.email);
+
+  // 2) Try google_id (session.user.id is often Google's id for OAuth users)
+  if (rawId && typeof rawId === "string") {
+    const byGoogle = await findUserByGoogleId(rawId);
+    if (byGoogle) return byGoogle.id;
+  }
+
+  // 3) Try by email (Google and others)
+  if (email) {
+    const byEmail = await findUserByEmail(email);
     if (byEmail) return byEmail.id;
   }
+
+  // 4) Session has id + email but no DB user yet (e.g. Google first sign-in failed to upsert). Create/link user.
+  if (rawId && email) {
+    try {
+      await ensureUsersTable();
+      const created = await upsertGoogleUser({
+        email,
+        name: (session.user?.name as string) ?? email,
+        google_id: rawId,
+      });
+      return created.id;
+    } catch (e) {
+      console.error("resolveSessionUserId upsert:", e);
+    }
+  }
+
   return null;
 }
 
