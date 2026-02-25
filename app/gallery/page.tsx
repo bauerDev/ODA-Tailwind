@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { Artwork } from "@/types/artwork";
+
+type Collection = { id: number; name: string };
 
 /** Minimal type for Choices instance to avoid importing choices.js on server (document is not defined). */
 interface ChoicesInstanceLike {
@@ -20,8 +24,14 @@ function parseYear(y: string): number | null {
 }
 
 export default function GaleriaPage() {
+  const { data: session, status } = useSession();
   const [artworks, setArtwork] = useState<Artwork[]>([]);
   const [loading, setLoading] = useState(true);
+  const [addToCollectionArtworkId, setAddToCollectionArtworkId] = useState<number | null>(null);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [addToCollectionLoading, setAddToCollectionLoading] = useState(false);
+  const [addToCollectionMessage, setAddToCollectionMessage] = useState<string | null>(null);
+  const [artworkInCollections, setArtworkInCollections] = useState<Record<number, Collection[]>>({});
 
   const [pendingAuthor, setPendingAuthor] = useState<Set<string>>(new Set());
   const [pendingYearMin, setPendingYearMin] = useState<number>(0);
@@ -41,12 +51,6 @@ export default function GaleriaPage() {
   const [choicesReady, setChoicesReady] = useState(false);
   /** True once pending year has been synced with DB range (avoids slider showing full range for one frame). */
   const [yearRangeSynced, setYearRangeSynced] = useState(false);
-  /** Texto en los inputs de año (para edición; se sincroniza con el slider). */
-  const [yearMinText, setYearMinText] = useState("");
-  const [yearMaxText, setYearMaxText] = useState("");
-  const [yearMinInputFocused, setYearMinInputFocused] = useState(false);
-  const [yearMaxInputFocused, setYearMaxInputFocused] = useState(false);
-
   const yearSliderRef = useRef<HTMLDivElement>(null);
   const yearMinInputRef = useRef<HTMLInputElement>(null);
   const yearMaxInputRef = useRef<HTMLInputElement>(null);
@@ -86,6 +90,22 @@ export default function GaleriaPage() {
       });
   }, []);
 
+  const fetchInCollectionsForArtwork = useCallback((artworkId: number) => {
+    fetch(`/api/artworks/${artworkId}/collections`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((list: Collection[]) => setArtworkInCollections((prev) => ({ ...prev, [artworkId]: list })))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (addToCollectionArtworkId && session?.user) {
+      fetch("/api/collections")
+        .then((res) => (res.ok ? res.json() : []))
+        .then(setCollections)
+        .catch(() => setCollections([]));
+    }
+  }, [addToCollectionArtworkId, session?.user]);
+
   const uniqueAuthors = useMemo(() => [...new Set(artworks.map((a) => a.author).filter(Boolean))].sort(), [artworks]);
   const uniqueMovements = useMemo(() => [...new Set(artworks.map((a) => a.movement).filter(Boolean))].sort(), [artworks]);
   const uniqueTechniques = useMemo(() => [...new Set(artworks.map((a) => a.technique).filter(Boolean))].sort(), [artworks]);
@@ -116,6 +136,20 @@ export default function GaleriaPage() {
       return true;
     });
   }, [artworks, appliedAuthor, appliedYearMin, appliedYearMax, appliedMovement, appliedTechnique]);
+
+  const filteredArtworkIds = useMemo(() => filteredArtworks.map((a) => a.id).join(","), [filteredArtworks]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || loading) return;
+    filteredArtworks.forEach((a) => {
+      fetch(`/api/artworks/${a.id}/collections`)
+        .then((res) => (res.ok ? res.json() : []))
+        .then((list: Collection[]) =>
+          setArtworkInCollections((prev) => ({ ...prev, [a.id]: list }))
+        )
+        .catch(() => {});
+    });
+  }, [status, loading, filteredArtworkIds]);
 
   const applyFilters = useCallback(() => {
     setAppliedAuthor(new Set(pendingAuthor));
@@ -196,41 +230,6 @@ export default function GaleriaPage() {
       yearDragActiveRef.current = null;
     }
   }, []);
-
-  /** Aplicar valor escrito en el input de año mínimo. */
-  const commitYearMinFromText = useCallback(
-    (text: string) => {
-      const n = parseInt(text.trim(), 10);
-      if (isNaN(n)) {
-        setPendingYearMin(yearMinDb);
-        setYearMinText(String(yearMinDb));
-        return;
-      }
-      const clamped = Math.max(yearMinDb, Math.min(n, yearMaxDb));
-      const currentMax = Math.max(pendingYearMin, pendingYearMax);
-      setPendingYearMin(clamped);
-      if (clamped > currentMax) setPendingYearMax(clamped);
-      setYearMinText(String(clamped));
-    },
-    [yearMinDb, yearMaxDb, pendingYearMin, pendingYearMax]
-  );
-  /** Aplicar valor escrito en el input de año máximo. */
-  const commitYearMaxFromText = useCallback(
-    (text: string) => {
-      const n = parseInt(text.trim(), 10);
-      if (isNaN(n)) {
-        setPendingYearMax(yearMaxDb);
-        setYearMaxText(String(yearMaxDb));
-        return;
-      }
-      const clamped = Math.max(yearMinDb, Math.min(n, yearMaxDb));
-      const currentMin = Math.min(pendingYearMin, pendingYearMax);
-      setPendingYearMax(clamped);
-      if (clamped < currentMin) setPendingYearMin(clamped);
-      setYearMaxText(String(clamped));
-    },
-    [yearMinDb, yearMaxDb, pendingYearMin, pendingYearMax]
-  );
 
   const clearFilters = useCallback(() => {
     const empty = new Set<string>();
@@ -464,62 +463,9 @@ export default function GaleriaPage() {
                           aria-label="To year"
                         />
                       </div>
-                      {/* Escritorio: solo texto del rango */}
-                      <p className="mt-1 hidden text-xs text-(--muted-foreground) lg:block">
+                      <p className="mt-1 text-xs text-(--muted-foreground)">
                         Range: {currentYearMin} – {currentYearMax}
                       </p>
-                      {/* Móvil y tablet: inputs editables */}
-                      <div className="mt-1 flex items-center gap-0.5 lg:hidden">
-                        <label className="sr-only" htmlFor="year-range-min">Desde año</label>
-                        <input
-                          id="year-range-min"
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          aria-label="Desde año"
-                          value={yearMinInputFocused ? yearMinText : String(currentYearMin)}
-                          onChange={(e) => setYearMinText(e.target.value)}
-                          onFocus={() => {
-                            setYearMinInputFocused(true);
-                            setYearMinText(String(currentYearMin));
-                          }}
-                          onBlur={() => {
-                            setYearMinInputFocused(false);
-                            commitYearMinFromText(yearMinText);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              (e.target as HTMLInputElement).blur();
-                            }
-                          }}
-                          className="w-9 min-w-0 rounded border border-(--border) bg-(--background) px-0.5 py-px text-center text-[10px] leading-tight text-(--foreground) [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                        <span className="text-[9px] text-(--muted-foreground)" aria-hidden>–</span>
-                        <label className="sr-only" htmlFor="year-range-max">Hasta año</label>
-                        <input
-                          id="year-range-max"
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          aria-label="Hasta año"
-                          value={yearMaxInputFocused ? yearMaxText : String(currentYearMax)}
-                          onChange={(e) => setYearMaxText(e.target.value)}
-                          onFocus={() => {
-                            setYearMaxInputFocused(true);
-                            setYearMaxText(String(currentYearMax));
-                          }}
-                          onBlur={() => {
-                            setYearMaxInputFocused(false);
-                            commitYearMaxFromText(yearMaxText);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              (e.target as HTMLInputElement).blur();
-                            }
-                          }}
-                          className="w-9 min-w-0 rounded border border-(--border) bg-(--background) px-0.5 py-px text-center text-[10px] leading-tight text-(--foreground) [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                        />
-                      </div>
                     </>
                   ) : (
                     <div className="flex h-8 min-h-10 items-center rounded border border-(--border) bg-(--background) px-3 text-sm text-(--muted-foreground)">
@@ -560,48 +506,64 @@ export default function GaleriaPage() {
       <section className="py-(--spacing-xl) sm:py-(--spacing-2xl)">
         <div className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-(--spacing-xl) sm:grid-cols-2 lg:grid-cols-3">
-            {filteredArtworks.map((artwork) => (
-              <a key={artwork.id} href={`/artwork/${artwork.id}`} className="block group">
-                <article className="relative block border border-[#afafaf80] bg-(--card) transition-shadow duration-(--transition-normal) hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
-                  <div className="relative w-full overflow-hidden pb-[75%]">
-                    <img
-                      src={artwork.image}
-                      alt={artwork.title}
-                      className="absolute left-0 top-0 h-full w-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
-                    />
-                  </div>
-
-                  <div className="p-(--spacing-lg)">
-                    <div className="flex items-start justify-between gap-(--spacing-sm)">
-                      <div className="flex-1">
-                        <h3 className="mb-(--spacing-xs) font-(--font-family-heading) text-xl italic text-(--foreground)">
-                          {artwork.title}
-                        </h3>
-                        <p className="text-sm text-(--muted-foreground)">
-                          {artwork.author} ({artwork.year})
-                        </p>
-                        <p className="text-sm text-(--muted-foreground)">
-                          {artwork.movement}
-                        </p>
-                      </div>
-                      <span className="inline-block shrink-0 bg-(--primary) px-3 py-(--spacing-xs) font-(--font-family-heading) text-sm text-(--primary-foreground)">
-                        {artwork.technique}
-                      </span>
+            {filteredArtworks.map((artwork) => {
+              const inCols = artworkInCollections[artwork.id] ?? [];
+              const isInCollection = inCols.length > 0;
+              return (
+                <article key={artwork.id} className="group relative block border border-[#afafaf80] bg-(--card) transition-shadow duration-(--transition-normal) hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+                  <Link href={`/artwork/${artwork.id}`} className="block">
+                    <div className="relative w-full overflow-hidden pb-[75%]">
+                      <img
+                        src={artwork.image}
+                        alt={artwork.title}
+                        className="absolute left-0 top-0 h-full w-full object-cover transition-transform duration-(--transition-slow) group-hover:scale-105"
+                      />
                     </div>
-
+                    <div className="p-(--spacing-lg)">
+                      <div className="flex items-start justify-between gap-(--spacing-sm)">
+                        <div className="flex-1">
+                          <h3 className="mb-(--spacing-xs) font-(--font-family-heading) text-xl italic text-(--foreground)">
+                            {artwork.title}
+                          </h3>
+                          <p className="text-sm text-(--muted-foreground)">
+                            {artwork.author} ({artwork.year})
+                          </p>
+                          <p className="text-sm text-(--muted-foreground)">
+                            {artwork.movement}
+                          </p>
+                        </div>
+                        <span className="inline-block shrink-0 bg-(--primary) px-3 py-(--spacing-xs) font-(--font-family-heading) text-sm text-(--primary-foreground)">
+                          {artwork.technique}
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                  {status === "authenticated" && (
                     <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setAddToCollectionMessage(null);
+                        setAddToCollectionArtworkId(artwork.id);
+                      }}
                       className="absolute bottom-(--spacing-lg) right-(--spacing-lg) flex h-8 w-8 items-center justify-center bg-(--foreground) text-(--background) transition-opacity duration-(--transition-fast) hover:opacity-80"
-                      aria-label="Add to my collection"
+                      aria-label={isInCollection ? "In your collection" : "Add to my collection"}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+                      {isInCollection ? (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden>
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                      )}
                     </button>
-                  </div>
+                  )}
                 </article>
-              </a>
-            ))}
+              );
+            })}
           </div>
           {filteredArtworks.length === 0 && (
             <p className="py-(--spacing-2xl) text-center font-(--font-family-heading) text-(--muted-foreground)">
@@ -609,6 +571,87 @@ export default function GaleriaPage() {
             </p>
           )}
         </div>
+
+        {/* Add to collection modal (same behaviour as /artwork/[id]) */}
+        {addToCollectionArtworkId != null && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+            onClick={() => setAddToCollectionArtworkId(null)}
+          >
+            <div
+              className="w-full max-w-md rounded-none border border-(--border) bg-(--card) p-(--spacing-xl) shadow-lg"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="font-(--font-family-heading) text-xl">Add to collection</h3>
+                <button
+                  type="button"
+                  className="text-(--muted-foreground) hover:text-(--foreground)"
+                  onClick={() => setAddToCollectionArtworkId(null)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
+              {status !== "authenticated" ? (
+                <>
+                  <p className="text-(--muted-foreground)">Sign in to add this artwork to a collection.</p>
+                  <Link href="/login" className="mt-4 inline-block text-(--primary)">Sign in</Link>
+                </>
+              ) : collections.length === 0 ? (
+                <>
+                  <p className="text-(--muted-foreground)">You haven&apos;t created any collections yet. Create one first to add artworks.</p>
+                  <Link href="/my-collection" className="mt-4 inline-block bg-(--primary) px-4 py-2 text-sm text-(--primary-foreground)">Go to My Collection</Link>
+                </>
+              ) : (
+                <>
+                  {addToCollectionMessage && (
+                    <p className={`mb-2 text-sm ${addToCollectionMessage.startsWith("Added") ? "text-green-600" : "text-red-600"}`}>
+                      {addToCollectionMessage}
+                    </p>
+                  )}
+                  <p className="mb-2 text-sm text-(--muted-foreground)">Choose a collection to add this artwork to:</p>
+                  <ul className="max-h-60 overflow-y-auto border border-(--border)">
+                    {collections.map((col) => (
+                      <li key={col.id}>
+                        <button
+                          type="button"
+                          disabled={addToCollectionLoading}
+                          className="w-full cursor-pointer px-4 py-2 text-left text-(--foreground) hover:bg-(--muted) disabled:opacity-50"
+                          onClick={async () => {
+                            setAddToCollectionLoading(true);
+                            setAddToCollectionMessage(null);
+                            const res = await fetch(`/api/collections/${col.id}/artworks`, {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ artwork_id: addToCollectionArtworkId }),
+                            });
+                            const data = await res.json().catch(() => ({}));
+                            setAddToCollectionLoading(false);
+                            if (res.ok) {
+                              setAddToCollectionMessage("Added to " + col.name);
+                              fetchInCollectionsForArtwork(addToCollectionArtworkId);
+                            } else {
+                              setAddToCollectionMessage(data.error || "Failed to add");
+                            }
+                          }}
+                        >
+                          {col.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                  <Link
+                    href="/my-collection"
+                    className="mt-4 inline-flex items-center gap-1 border border-(--border) bg-transparent px-4 py-2 text-sm text-(--foreground) transition hover:bg-(--muted)"
+                  >
+                    Create new collection
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </section>
     </>
   );
