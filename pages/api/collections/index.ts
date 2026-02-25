@@ -7,6 +7,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
+import { resolveSessionUserId } from "../../../lib/db/users";
 import {
   ensureCollectionsTables,
   listCollectionsByUserId,
@@ -19,7 +20,7 @@ export default async function handler(
 ) {
   await ensureCollectionsTables();
   const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : null;
+  const userId = await resolveSessionUserId(session);
 
   if (req.method === "GET") {
     if (!userId) {

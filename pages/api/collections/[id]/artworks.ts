@@ -7,6 +7,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
+import { resolveSessionUserId } from "../../../../lib/db/users";
 import { addArtworkToCollection, removeArtworkFromCollection } from "../../../../lib/db/collections";
 
 export default async function handler(
@@ -23,7 +24,7 @@ export default async function handler(
   }
 
   const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id ? parseInt(session.user.id, 10) : null;
+  const userId = await resolveSessionUserId(session);
 
   if (!userId) {
     return res.status(401).json({ error: "You must be signed in" });
