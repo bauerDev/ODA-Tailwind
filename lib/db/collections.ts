@@ -130,6 +130,14 @@ export async function getCollectionWithArtworks(collectionId: number, userId: nu
   return { collection: col, artworks: result.rows };
 }
 
+/** Delete a collection (only if the user owns it). collection_artworks are removed by CASCADE. */
+export async function deleteCollection(collectionId: number, userId: number): Promise<boolean> {
+  const col = await getCollectionById(collectionId);
+  if (!col || col.user_id !== userId) return false;
+  await pool.query("DELETE FROM user_collections WHERE id = $1", [collectionId]);
+  return true;
+}
+
 /** Admin: list all collections with user_id */
 export async function listAllCollections(): Promise<(UserCollectionRow & { user_email?: string })[]> {
   const result = await pool.query(`

@@ -80,10 +80,12 @@ export default function CollectionDetailPage() {
         </Link>
       </div>
       <section className="mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8 pb-(--spacing-3xl) sm:pb-(--spacing-4xl)">
-        <h1 className="mb-2 font-(--font-family-heading) text-3xl text-(--foreground)">{collection.name}</h1>
-        {collection.description && (
-          <p className="mb-(--spacing-xl) text-(--muted-foreground)">{collection.description}</p>
-        )}
+        <div className="mb-(--spacing-xl)">
+          <h1 className="mb-2 font-(--font-family-heading) text-3xl text-(--foreground)">{collection.name}</h1>
+          {collection.description && (
+            <p className="text-(--muted-foreground)">{collection.description}</p>
+          )}
+        </div>
         {artworks.length === 0 ? (
           <div className="rounded-none border border-(--border) bg-(--card) py-(--spacing-4xl) text-center">
             <p className="text-(--muted-foreground)">No artworks in this collection yet.</p>

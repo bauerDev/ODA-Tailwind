@@ -7,8 +7,8 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
 import {
-  getCollectionById,
   getCollectionWithArtworks,
+  deleteCollection,
 } from "../../../lib/db/collections";
 
 export default async function handler(
@@ -43,6 +43,22 @@ export default async function handler(
     }
   }
 
-  res.setHeader("Allow", ["GET"]);
+  if (req.method === "DELETE") {
+    if (!userId) {
+      return res.status(401).json({ error: "You must be signed in to delete a collection" });
+    }
+    try {
+      const deleted = await deleteCollection(collectionId, userId);
+      if (!deleted) {
+        return res.status(404).json({ error: "Collection not found or you do not own it" });
+      }
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: "Failed to delete collection" });
+    }
+  }
+
+  res.setHeader("Allow", ["GET", "DELETE"]);
   return res.status(405).json({ error: "Method not allowed" });
 }
