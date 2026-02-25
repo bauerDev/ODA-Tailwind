@@ -29,9 +29,9 @@ export default function Footer() {
                             Legal
                         </h3>
                         <ul className="list-none flex flex-col gap-(--spacing-sm) text-[#f5f5f5cc] [&>li>a]:text-[#f5f5f5cc] [&>li>a]:no-underline [&>li>a]:hover:text-(--primary-foreground)">
-                            <li><a href="/politica-de-privacidad">Privacy Policy</a></li>
-                            <li><a href="/terminos-de-uso">Terms of Use</a></li>
-                            <li><a href="/accesibilidad">Accessibility</a></li>
+                            <li><a href="/privacy-policy">Privacy Policy</a></li>
+                            <li><a href="/terms-of-use">Terms of Use</a></li>
+                            <li><a href="/accesibility">Accessibility</a></li>
                         </ul>
                     </div>
                 </div>
