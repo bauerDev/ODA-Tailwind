@@ -4,9 +4,10 @@
  * Used on /my-collection/[id] to show the collection and its artwork list.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../lib/auth";
-import { resolveSessionUserId } from "../../../lib/db/users";
+import { resolveTokenUserId, resolveSessionUserId } from "../../../lib/db/users";
 import {
   getCollectionWithArtworks,
   deleteCollection,
@@ -25,8 +26,13 @@ export default async function handler(
     return res.status(400).json({ error: "Invalid collection ID" });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  const userId = await resolveSessionUserId(session);
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = secret ? await getToken({ req, secret }) : null;
+  let userId = token ? await resolveTokenUserId(token) : null;
+  if (userId == null) {
+    const session = await getServerSession(req, res, authOptions);
+    userId = await resolveSessionUserId(session);
+  }
 
   if (req.method === "GET") {
     if (!userId) {

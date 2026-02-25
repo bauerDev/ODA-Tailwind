@@ -5,9 +5,10 @@
  * id in URL = collection_id. Requires session.
  */
 import type { NextApiRequest, NextApiResponse } from "next";
+import { getToken } from "next-auth/jwt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/auth";
-import { resolveSessionUserId } from "../../../../lib/db/users";
+import { resolveTokenUserId, resolveSessionUserId } from "../../../../lib/db/users";
 import { addArtworkToCollection, removeArtworkFromCollection } from "../../../../lib/db/collections";
 
 export default async function handler(
@@ -23,8 +24,13 @@ export default async function handler(
     return res.status(400).json({ error: "Invalid collection ID" });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  const userId = await resolveSessionUserId(session);
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = secret ? await getToken({ req, secret }) : null;
+  let userId = token ? await resolveTokenUserId(token) : null;
+  if (userId == null) {
+    const session = await getServerSession(req, res, authOptions);
+    userId = await resolveSessionUserId(session);
+  }
 
   if (!userId) {
     return res.status(401).json({ error: "You must be signed in" });

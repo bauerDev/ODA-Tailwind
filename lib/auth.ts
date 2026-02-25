@@ -80,6 +80,8 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user, account }) {
       if (user) {
+        if (user.email) token.email = user.email;
+        if (user.name) token.name = user.name;
         if (account?.provider === "google") {
           try {
             let dbUser = await findUserByGoogleId(user.id as string);
