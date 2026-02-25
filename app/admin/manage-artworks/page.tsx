@@ -233,7 +233,7 @@ export default function ManageArtworks() {
                           </button>
                           <button
                             onClick={() => handleDelete(a.id)}
-                            className="bg-red-600 text-white px-2 py-1 text-sm hover:opacity-90"
+                            className="bg-(--primary) text-(--primary-foreground) px-2 py-1 text-sm hover:opacity-90"
                             title="Delete"
                           >
                             Delete

@@ -109,7 +109,7 @@ export default function ManageUsers() {
                           type="button"
                           disabled={deletingId === u.id || currentUserId === u.id}
                           onClick={() => handleDelete(u)}
-                          className="bg-red-600 text-white px-2 py-1 text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="bg-(--primary) text-(--primary-foreground) px-2 py-1 text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                           title={currentUserId === u.id ? "You cannot delete yourself" : "Delete user"}
                         >
                           {deletingId === u.id ? "…" : "Delete"}

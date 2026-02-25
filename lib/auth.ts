@@ -72,7 +72,8 @@ export const authOptions: NextAuthOptions = {
             google_id: user.id,
           });
         } catch (e) {
-          console.error("Google user upsert:", e);
+          console.error("Google signIn user upsert:", e);
+          // Don't block sign-in if DB fails (e.g. production cold start)
         }
       }
       return true;
@@ -80,27 +81,35 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account }) {
       if (user) {
         if (account?.provider === "google") {
-          let dbUser = await findUserByGoogleId(user.id as string);
-          if (!dbUser && user.email) {
-            await ensureUsersTable();
-            await upsertGoogleUser({
-              email: user.email,
-              name: (user.name as string) ?? user.email,
-              google_id: user.id as string,
-            });
-            dbUser = await findUserByGoogleId(user.id as string) ?? await findUserByEmail(user.email);
-          }
-          if (dbUser) {
-            token.id = String(dbUser.id);
-            token.isAdmin = !!dbUser.is_admin;
-            token.role = dbUser.user_type === "docente" ? "Teacher" : "Student";
-          } else {
-            token.id = user.id;
+          try {
+            let dbUser = await findUserByGoogleId(user.id as string);
+            if (!dbUser && user.email) {
+              await ensureUsersTable();
+              await upsertGoogleUser({
+                email: user.email,
+                name: (user.name as string) ?? user.email,
+                google_id: user.id as string,
+              });
+              dbUser = await findUserByGoogleId(user.id as string) ?? await findUserByEmail(user.email);
+            }
+            if (dbUser) {
+              token.id = String(dbUser.id);
+              token.isAdmin = !!dbUser.is_admin;
+              token.role = dbUser.user_type === "docente" ? "Teacher" : "Student";
+            } else {
+              token.id = user.id as string;
+              token.isAdmin = false;
+              token.role = "Student";
+            }
+          } catch (e) {
+            console.error("Google jwt callback (DB):", e);
+            // Fallback so login still succeeds if DB fails
+            token.id = user.id as string;
             token.isAdmin = false;
             token.role = "Student";
           }
         } else {
-          token.id = user.id;
+          token.id = user.id as string;
           token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
           token.role = (user as { role?: string }).role ?? "Student";
         }
